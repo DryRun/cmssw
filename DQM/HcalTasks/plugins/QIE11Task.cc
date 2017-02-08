@@ -42,10 +42,34 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 		vhashC36);
 
 	//	INITIALIZE what you need
-	_cShapeCut_EChannel.initialize(_name,
-		"ShapeCut", hcaldqm::hashfunctions::fEChannel,
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
+	unsigned int itr = 0;
+	for (unsigned int crate = 34; crate <= 34; ++crate) {
+		for (unsigned int slot = 11; slot <= 12; ++slot) {
+			std::vector<uint32_t> vhashSlot;
+			vhashSlot.push_back(HcalElectronicsId(crate, slot, FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+			_filter_slot[itr].initialize(filter::fPreserver, hashfunctions::fCrateSlot, vhashSlot);
+			_cShapeCut_EChannel[itr].initialize(_name,
+				"ShapeCut", hcaldqm::hashfunctions::fEChannel,
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
+			for (unsigned int j=0; j<10; j++) {
+				_cTDCvsADC_EChannel[j][itr].initialize(_name,
+					"TDCvsADC", hcaldqm::hashfunctions::fEChannel,
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
+				_cADC_EChannel[j][itr].initialize(_name,
+					"ADC", hcaldqm::hashfunctions::fEChannel,
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
+				_cTDC_EChannel[j][itr].initialize(_name,
+					"TDC", hcaldqm::hashfunctions::fEChannel,
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
+			}
+			++itr;
+		}
+	}
 	_cShapeCut.initialize(_name,
 		"ShapeCut", 
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
@@ -60,36 +84,28 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 	_cADC.initialize(_name, "ADC",
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
-	for (unsigned int j=0; j<10; j++)
-	{
-		_cTDCvsADC_EChannel[j].initialize(_name,
-			"TDCvsADC", hcaldqm::hashfunctions::fEChannel,
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
-		_cADC_EChannel[j].initialize(_name,
-			"ADC", hcaldqm::hashfunctions::fEChannel,
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
-		_cTDC_EChannel[j].initialize(_name,
-			"TDC", hcaldqm::hashfunctions::fEChannel,
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
-	}
 
-	_cShapeCut_EChannel.book(ib, _emap, _filter_C36, _subsystem);
+	itr = 0;
+	for(unsigned int crate=22; crate < 33; ++crate) {
+		if (crate != 22 && crate != 29 && crate != 32) continue;
+		for(unsigned int slot=SLOT_uTCA_MIN; slot<=SLOT_uTCA_MAX; ++slot) {
+			char aux[100];
+			sprintf(aux, "/Crate%d_Slot%d", crate, slot);
+			_cShapeCut_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
+			for (unsigned int j=0; j<10; j++) {
+				char aux2[100];
+				sprintf(aux2, "/Crate%d_Slot%d/TS%d", crate, slot, j);
+				_cTDCvsADC_EChannel[j][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux2);
+				_cTDC_EChannel[j][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux2);
+				_cADC_EChannel[j][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux2);
+			}
+			++itr;
+		}
+	}
 	_cShapeCut.book(ib, _subsystem);
 	_cTDCvsADC.book(ib, _subsystem);
 	_cTDC.book(ib, _subsystem);
 	_cADC.book(ib, _subsystem);
-	for (unsigned int i=0; i<10; i++)
-	{
-		char aux[10];
-		sprintf(aux, "TS%d", i);
-		_cTDCvsADC_EChannel[i].book(ib, _emap, _filter_C36, _subsystem, aux);
-		_cTDC_EChannel[i].book(ib, _emap, _filter_C36, _subsystem, aux);
-		_cADC_EChannel[i].book(ib, _emap, _filter_C36, _subsystem, aux);
-	}
 
 	_ehashmap.initialize(_emap, electronicsmap::fD2EHashMap, _filter_C36);
 }
@@ -115,26 +131,28 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 		DetId did = frame.detid();
 		HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
 
+		int fakecrate = -1;
+		if (eid.crateId() == 34) fakecrate = 0;
+		int index = fakecrate * 12 + eid.slot() - 1;
 		//	compute the signal, ped subracted
 //		double q = hcaldqm::utilities::aveTS_v10<QIE11DataFrame>(frame,
 //			constants::adc2fC[_ped], 0, frame.samples()-1);
-
 
 		//	iterate thru all TS and fill
 		for (int j=0; j<frame.samples(); j++)
 		{
 			//	shapes are after the cut
-			_cShapeCut_EChannel.fill(eid, j, adc2fC[frame[j].adc()]);	
+			_cShapeCut_EChannel[index].fill(eid, j, adc2fC[frame[j].adc()]);	
 			_cShapeCut.fill(eid, j, adc2fC[frame[j].adc()]);
 			
 
 			//	w/o a cut
-			_cTDCvsADC_EChannel[j].fill(eid, frame[j].adc(), 
+			_cTDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
 				frame[j].tdc());
 			_cTDCvsADC.fill(frame[j].adc(), frame[j].tdc());
-			_cTDC_EChannel[j].fill(eid, frame[j].tdc());
+			_cTDC_EChannel[j][index].fill(eid, frame[j].tdc());
 			_cTDC.fill(eid, frame[j].tdc());
-			_cADC_EChannel[j].fill(eid, frame[j].adc());
+			_cADC_EChannel[j][index].fill(eid, frame[j].adc());
 			_cADC.fill(eid, frame[j].adc());
 
 		}
