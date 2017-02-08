@@ -1,4 +1,5 @@
-
+#define HIDE_PEDESTAL_CONDITIONS
+//#define HIDE_HBHEHO
 #include "DQM/HcalTasks/interface/PedestalTask.h"
 
 using namespace hcaldqm;
@@ -91,8 +92,10 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	_xPedSum2Total.initialize(hcaldqm::hashfunctions::fDChannel);
 	_xPedEntriesTotal.initialize(hcaldqm::hashfunctions::fDChannel);
 
+#ifndef HIDE_PEDESTAL_CONDITIONS
 	_xPedRefMean.initialize(hcaldqm::hashfunctions::fDChannel);
 	_xPedRefRMS.initialize(hcaldqm::hashfunctions::fDChannel);
+#endif
 
 	_xNChs.initialize(hcaldqm::hashfunctions::fFED);
 	_xNMsn1LS.initialize(hcaldqm::hashfunctions::fFED);
@@ -405,8 +408,10 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	_xPedSum2Total.book(_emap);
 	_xPedEntriesTotal.book(_emap);
 
+#ifndef HIDE_PEDESTAL_CONDITIONS
 	_xPedRefMean.book(_emap);
 	_xPedRefRMS.book(_emap);
+#endif
 
 	_xNChs.book(_emap);
 	_xNMsn1LS.book(_emap);
@@ -426,6 +431,7 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		//	skip Crate 36
 		if (_filter_C36.filter(HcalElectronicsId(_ehashmap.lookup(*it))))
 			continue;
+		#ifndef HIDE_PEDESTAL_CONDITIONS
 		HcalDetId did = HcalDetId(it->rawId());
 
 		HcalPedestal const* peds = dbs->getPedestal(did);
@@ -437,6 +443,7 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		msum/=4; rsum/=4;
 		_xPedRefMean.set(did, msum);
 		_xPedRefRMS.set(did, rsum);
+		#endif
 	}
 }
 
@@ -554,9 +561,13 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 
 		HcalDetId did = HcalDetId(it->rawId());
 		double sum1LS = _xPedSum1LS.get(did); 
+#ifndef HIDE_PEDESTAL_CONDITIONS
 		double refm = _xPedRefMean.get(did);
+#endif
 		double sum21LS = _xPedSum21LS.get(did); 
+#ifndef HIDE_PEDESTAL_CONDITIONS
 		double refr = _xPedRefRMS.get(did);
+#endif
 		double n1LS = _xPedEntries1LS.get(did);
 		
 		double sumTotal = _xPedSumTotal.get(did);
@@ -588,14 +599,18 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 
 		//	compute the means and diffs for this LS
 		sum1LS/=n1LS; double rms1LS = sqrt(sum21LS/n1LS-sum1LS*sum1LS);
-		double diffm1LS = sum1LS-refm;
+#ifndef HIDE_PEDESTAL_CONDITIONS
+		double diffm1LS = sum1LS - refm;
 		double diffr1LS = rms1LS - refr;
+#endif
 		
 		//	compute the means and diffs for the whole Run
 		sumTotal/=nTotal; 
 		double rmsTotal = sqrt(sum2Total/nTotal-sumTotal*sumTotal);
+#ifndef HIDE_PEDESTAL_CONDITIONS
 		double diffmTotal = sumTotal-refm;
 		double diffrTotal = rmsTotal - refr;
+#endif
 
 		//	FILL ACTUAL MEANs AND RMSs FOR THIS LS
 		_cMean1LS_Subdet.fill(did, sum1LS);
@@ -604,10 +619,12 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		_cRMS1LS_depth.fill(did, rms1LS);
 
 		//	FILL THE DIFFERENCES FOR THIS LS
+#ifndef HIDE_PEDESTAL_CONDITIONS
 		_cMeanDBRef1LS_Subdet.fill(did, diffm1LS);
 		_cMeanDBRef1LS_depth.fill(did, diffm1LS);
 		_cRMSDBRef1LS_Subdet.fill(did, diffr1LS);
 		_cRMSDBRef1LS_depth.fill(did, diffr1LS);
+#endif
 		
 			//	FILL ACTUAL MEANs AND RMSs FOR THE WHOLE RUN
 		_cMeanTotal_Subdet.fill(did, sumTotal);
@@ -616,25 +633,31 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		_cRMSTotal_depth.fill(did, rmsTotal);
 
 		//	FILL THE DIFFERENCES FOR THE WHOLE RUN
+#ifndef HIDE_PEDESTAL_CONDITIONS
 		_cMeanDBRefTotal_Subdet.fill(did, diffmTotal);
 		_cMeanDBRefTotal_depth.fill(did, diffmTotal);
 		_cRMSDBRefTotal_Subdet.fill(did, diffrTotal);
 		_cRMSDBRefTotal_depth.fill(did, diffrTotal);
+#endif
 
 		//	FOR THIS LS
 		if (eid.isVMEid())
 		{
 			_cMean1LS_FEDVME.fill(eid, sum1LS);
 			_cRMS1LS_FEDVME.fill(eid, rms1LS);
+#ifndef HIDE_PEDESTAL_CONDITIONS
 			_cMeanDBRef1LS_FEDVME.fill(eid, diffm1LS);
 			_cRMSDBRef1LS_FEDVME.fill(eid, diffr1LS);
+#endif
 		}
 		else
 		{
 			_cMean1LS_FEDuTCA.fill(eid, sum1LS);
 			_cRMS1LS_FEDuTCA.fill(eid, rms1LS);
+#ifndef HIDE_PEDESTAL_CONDITIONS
 			_cMeanDBRef1LS_FEDuTCA.fill(eid, diffm1LS);
 			_cRMSDBRef1LS_FEDuTCA.fill(eid, diffr1LS);
+#endif
 		}
 		
 		//	FOR THE WHOLE RUN
@@ -642,18 +665,23 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		{
 			_cMeanTotal_FEDVME.fill(eid, sumTotal);
 			_cRMSTotal_FEDVME.fill(eid, rmsTotal);
+#ifndef HIDE_PEDESTAL_CONDITIONS
 			_cMeanDBRefTotal_FEDVME.fill(eid, diffmTotal);
 			_cRMSDBRefTotal_FEDVME.fill(eid, diffrTotal);
+#endif
 		}
 		else
 		{
 			_cMeanTotal_FEDuTCA.fill(eid, sumTotal);
 			_cRMSTotal_FEDuTCA.fill(eid, rmsTotal);
+#ifndef HIDE_PEDESTAL_CONDITIONS
 			_cMeanDBRefTotal_FEDuTCA.fill(eid, diffmTotal);
 			_cRMSDBRefTotal_FEDuTCA.fill(eid, diffrTotal);
+#endif
 		}
 
 		//	FOR THE CURRENT LS COMPARE MEANS AND RMSS
+#ifndef HIDE_PEDESTAL_CONDITIONS
 		if (fabs(diffm1LS)>_thresh_mean)
 		{
 			_cMeanBad1LS_depth.fill(did);
@@ -692,6 +720,7 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			else 
 				_cRMSBadTotal_FEDuTCA.fill(eid);
 		}
+#endif
 
 	}
 
@@ -827,10 +856,12 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			_xPedEntriesTotal.get(did)++;
 		}
 	}
+	#ifndef HIDE_HBHEHO
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalBarrel, 1,1,1), 
 		_currentLS, nHB);
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalEndcap, 1,1,1), 
 		_currentLS, nHE);
+	#endif
 
 	for (HODigiCollection::const_iterator it=cho->begin();
 		it!=cho->end(); ++it)
@@ -853,8 +884,10 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			_xPedEntriesTotal.get(did)++;
 		}
 	}
+	#ifndef HIDE_HBHEHO
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalOuter, 1,1,1), 
 		_currentLS, nHO);
+	#endif
 
 	for (HFDigiCollection::const_iterator it=chf->begin();
 		it!=chf->end(); ++it)
