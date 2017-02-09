@@ -20,7 +20,7 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 		edm::InputTag("hcalDigis"));
 	_tokHBHE = consumes<HBHEDigiCollection>(_tagHBHE);
 	_tokHO = consumes<HODigiCollection>(_tagHO);
-	_tokHF = consumes<HFDigiCollection>(_tagHF);
+	_tokHF = consumes<QIE10DigiCollection>(_tagHF);
 	_tokuMN = consumes<HcalUMNioDigi>(_taguMN);
 
 	//	constants
@@ -32,7 +32,7 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 		20);
 	_laserType = (uint32_t)ps.getUntrackedParameter<uint32_t>("laserType");
 }
-	
+
 /* virtual */ void LaserTask::bookHistograms(DQMStore::IBooker &ib,
 	edm::Run const& r, edm::EventSetup const& es)
 {
@@ -273,8 +273,9 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 	for (std::vector<HcalGenericDetId>::const_iterator it=dids.begin();
 		it!=dids.end(); ++it)
 	{
-		if (!it->isHcalDetId())
+		if (!it->isHcalDetId()) {
 			continue;
+		}
 		HcalDetId did = HcalDetId(it->rawId());
 		HcalElectronicsId eid(_ehashmap.lookup(*it));
 		int n = _xEntries.get(did);
@@ -323,7 +324,7 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 {
 	edm::Handle<HBHEDigiCollection>		chbhe;
 	edm::Handle<HODigiCollection>		cho;
-	edm::Handle<HFDigiCollection>		chf;
+	edm::Handle<QIE10DigiCollection>		chf;
 
 	if (!e.getByToken(_tokHBHE, chbhe))
 		_logger.dqmthrow("Collection HBHEDigiCollection isn't available "
@@ -332,7 +333,7 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 		_logger.dqmthrow("Collection HODigiCollection isn't available "
 			+ _tagHO.label() + " " + _tagHO.instance());
 	if (!e.getByToken(_tokHF, chf))
-		_logger.dqmthrow("Collection HFDigiCollection isn't available "
+		_logger.dqmthrow("Collection QIE10DigiCollection (for HF) isn't available "
 			+ _tagHF.label() + " " + _tagHF.instance());
 
 //	int currentEvent = e.eventAuxiliary().id().event();
@@ -348,7 +349,7 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 			continue;
 		HcalDetId did = digi.id();
 		HcalElectronicsId eid = digi.elecId();
-
+		
 		double aveTS = hcaldqm::utilities::aveTS<HBHEDataFrame>(digi, 2.5, 0,
 			digi.size()-1);
 		_xSignalSum.get(did)+=sumQ;
@@ -420,18 +421,20 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 			_cSignalvsBX_SubdetPM.fill(did, bx, sumQ);
 		}
 	}
-	for (HFDigiCollection::const_iterator it=chf->begin();
+
+	// HF : after the upgrade, this seems to have changed to QIE10DigiCollection, which is not backwards-compatible with HFDigiCollection.
+	for (QIE10DigiCollection::const_iterator it=chf->begin();
 		it!=chf->end(); ++it)
 	{
-		const HFDataFrame digi = (const HFDataFrame)(*it);
-		double sumQ = hcaldqm::utilities::sumQ<HFDataFrame>(digi, 2.5, 0, 
+		const QIE10DataFrame digi = (const QIE10DataFrame)(*it);
+		double sumQ = hcaldqm::utilities::sumQ_v10<QIE10DataFrame>(digi, 2.5, 0, 
 			digi.size()-1);
 		if (sumQ<_lowHF)
 			continue;
 		HcalDetId did = digi.id();
-		HcalElectronicsId eid = digi.elecId();
+		HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
 
-		double aveTS = hcaldqm::utilities::aveTS<HFDataFrame>(digi, 2.5, 0,
+		double aveTS = hcaldqm::utilities::aveTS_v10<QIE10DataFrame>(digi, 2.5, 0,
 			digi.size()-1);
 		_xSignalSum.get(did)+=sumQ;
 		_xSignalSum2.get(did)+=sumQ*sumQ;
@@ -439,11 +442,11 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 		_xTimingSum2.get(did)+=aveTS*aveTS;
 		_xEntries.get(did)++;
 
-		for (int i=0; i<digi.size(); i++)
+		for (unsigned int i=0; i<digi.size(); i++)
 		{
-			_cShapeCut_FEDSlot.fill(eid, i, 
-				digi.sample(i).nominal_fC()-2.5);
-			_cADC_SubdetPM.fill(did, digi.sample(i).adc());
+			//_cShapeCut_FEDSlot.fill(eid, i, digi[i].nominal_fC()-2.5);
+			_cShapeCut_FEDSlot.fill(eid, (int)i, constants::adc2fC[digi[i].adc()]); // TODO : should we do a pedestal subtraction here?
+			_cADC_SubdetPM.fill(did, digi[i].adc());
 		}
 
 		//	select based on local global
