@@ -53,7 +53,7 @@ class QIE11Task : public hcaldqm::DQTask
 
 
 		//	filters
-		hcaldqm::filter::HashFilter _filter_C36;
+		hcaldqm::filter::HashFilter _filter_C34;
 		hcaldqm::filter::HashFilter _filter_slot[2];
 
 		//	Electronics Maps/Hashes

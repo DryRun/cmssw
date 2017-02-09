@@ -55,7 +55,6 @@ class QIE10Task : public hcaldqm::DQTask
 		//	hcaldqm::Containers
 		hcaldqm::ContainerProf1D	_cShapeCut_EChannel[36];
 		hcaldqm::Container2D	_cLETDCvsADC_EChannel[10][36];
-		hcaldqm::Container2D	_cTETDCvsADC_EChannel[10][36];
 		hcaldqm::Container1D _cLETDC_EChannel[10][36];
 		hcaldqm::Container1D _cADC_EChannel[10][36];
 		hcaldqm::Container2D _cOccupancy_depth;
@@ -80,7 +79,6 @@ class QIE10Task : public hcaldqm::DQTask
 		//	hcaldqm::Containers overall
 		hcaldqm::ContainerSingleProf1D	_cShapeCut;
 		hcaldqm::ContainerSingle2D		_cLETDCvsADC;
-		hcaldqm::ContainerSingle2D		_cTETDCvsADC;
 		hcaldqm::ContainerSingle1D		_cLETDC;
 		hcaldqm::ContainerSingle1D		_cADC;
 
