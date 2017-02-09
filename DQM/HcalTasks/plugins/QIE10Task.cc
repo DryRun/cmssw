@@ -46,9 +46,9 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 			_filter_slot[itr].initialize(filter::fPreserver, hashfunctions::fCrateSlot, vhashSlot);
 
 		 	_cShapeCut_EChannel[itr].initialize(_name,
-						 "ShapeCut", hcaldqm::hashfunctions::fEChannel,
-						 new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
-						 new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
+				"ShapeCut", hcaldqm::hashfunctions::fEChannel,
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
 			for (unsigned int j=0; j<nTS; j++) {
 				_cLETDCvsADC_EChannel[j][itr].initialize(_name,
 					"LETDCvsADC", hcaldqm::hashfunctions::fEChannel,
@@ -165,8 +165,8 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 			constants::adc2fC[_ped], 0, frame.samples()-1);
 
 
-				_cOccupancy_Crate.fill(eid);
-				_cOccupancy_CrateSlot.fill(eid);
+		_cOccupancy_Crate.fill(eid);
+		_cOccupancy_CrateSlot.fill(eid);
 
 		//	iterate thru all TS and fill
 		for (int j=0; j<frame.samples(); j++)
