@@ -35,11 +35,13 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 	edm::ESHandle<HcalDbService> dbs;
 	es.get<HcalDbRecord>().get(dbs);
 	_emap = dbs->getHcalMapping();
-	std::vector<uint32_t> vhashC36;
-	vhashC36.push_back(HcalElectronicsId(36, 4,
+	std::vector<uint32_t> vhashC34;
+	vhashC34.push_back(HcalElectronicsId(34, 11,
 		FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
-	_filter_C36.initialize(filter::fPreserver, hcaldqm::hashfunctions::fCrateSlot,
-		vhashC36);
+	vhashC34.push_back(HcalElectronicsId(34, 12,
+		FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+	_filter_C34.initialize(filter::fPreserver, hcaldqm::hashfunctions::fCrateSlot,
+		vhashC34);
 
 	//	INITIALIZE what you need
 	unsigned int itr = 0;
@@ -86,9 +88,9 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 
 	itr = 0;
-	for(unsigned int crate=22; crate < 33; ++crate) {
-		if (crate != 22 && crate != 29 && crate != 32) continue;
-		for(unsigned int slot=SLOT_uTCA_MIN; slot<=SLOT_uTCA_MAX; ++slot) {
+	std::map<std::pair<unsigned int, unsigned int>, unsigned int> itr_map;
+	for(unsigned int crate = 34; crate <= 34; ++crate) {
+		for(unsigned int slot=11; slot<=12; ++slot) {
 			char aux[100];
 			sprintf(aux, "/Crate%d_Slot%d", crate, slot);
 			_cShapeCut_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
@@ -99,6 +101,7 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 				_cTDC_EChannel[j][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux2);
 				_cADC_EChannel[j][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux2);
 			}
+			itr_map[std::make_pair(crate, slot)] = itr;
 			++itr;
 		}
 	}
@@ -107,7 +110,7 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 	_cTDC.book(ib, _subsystem);
 	_cADC.book(ib, _subsystem);
 
-	_ehashmap.initialize(_emap, electronicsmap::fD2EHashMap, _filter_C36);
+	_ehashmap.initialize(_emap, electronicsmap::fD2EHashMap, _filter_C34);
 }
 
 /* virtual */ void QIE11Task::endLuminosityBlock(edm::LuminosityBlock const& lb,
@@ -121,19 +124,19 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 /* virtual */ void QIE11Task::_process(edm::Event const& e, 
 	edm::EventSetup const&)
 {
-	edm::Handle<QIE11DigiCollection> cqie10;
-	if (!e.getByToken(_tokQIE11, cqie10))
+	edm::Handle<QIE11DigiCollection> cqie11;
+	if (!e.getByToken(_tokQIE11, cqie11))
 		return;
 
-	for (uint32_t i=0; i<cqie10->size(); i++)
+	for (uint32_t i=0; i<cqie11->size(); i++)
 	{
-		QIE11DataFrame frame = static_cast<QIE11DataFrame>((*cqie10)[i]);
+		QIE11DataFrame frame = static_cast<QIE11DataFrame>((*cqie11)[i]);
 		DetId did = frame.detid();
 		HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
-
 		int fakecrate = -1;
 		if (eid.crateId() == 34) fakecrate = 0;
-		int index = fakecrate * 12 + eid.slot() - 1;
+		int index = fakecrate * 12 + (eid.slot() - 10) - 1;
+
 		//	compute the signal, ped subracted
 //		double q = hcaldqm::utilities::aveTS_v10<QIE11DataFrame>(frame,
 //			constants::adc2fC[_ped], 0, frame.samples()-1);
@@ -141,18 +144,23 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 		//	iterate thru all TS and fill
 		for (int j=0; j<frame.samples(); j++)
 		{
-			//	shapes are after the cut
-			_cShapeCut_EChannel[index].fill(eid, j, adc2fC[frame[j].adc()]);	
-			_cShapeCut.fill(eid, j, adc2fC[frame[j].adc()]);
-			
+			if (index == 0 || index == 1) {
+				//	shapes are after the cut
+				_cShapeCut_EChannel[index].fill(eid, j, adc2fC[frame[j].adc()]);	
+				
 
-			//	w/o a cut
-			_cTDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
-				frame[j].tdc());
+				//	w/o a cut
+				_cTDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
+					frame[j].tdc());
+				_cTDC_EChannel[j][index].fill(eid, frame[j].tdc());
+				_cADC_EChannel[j][index].fill(eid, frame[j].adc());
+			}
+			_cShapeCut.fill(eid, j, adc2fC[frame[j].adc()]);
+
 			_cTDCvsADC.fill(frame[j].adc(), frame[j].tdc());
-			_cTDC_EChannel[j][index].fill(eid, frame[j].tdc());
+
 			_cTDC.fill(eid, frame[j].tdc());
-			_cADC_EChannel[j][index].fill(eid, frame[j].adc());
+
 			_cADC.fill(eid, frame[j].adc());
 
 		}
