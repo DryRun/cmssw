@@ -109,8 +109,9 @@ namespace hcaldqm
 					{
 						HcalGenericDetId did = HcalGenericDetId(
 							_emap->lookup(*it));
-						if (filter.filter(*it))
+						if (filter.filter(*it)) {
 							continue;
+						}
 						//	skip those that are not detid or calib ids
 //						if (!did.isHcalDetId())
 //							continue;
