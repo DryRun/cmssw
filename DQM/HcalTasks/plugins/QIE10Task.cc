@@ -55,11 +55,6 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
-				_cTETDCvsADC_EChannel[j][itr].initialize(_name,
-					"TETDCvsADC", hcaldqm::hashfunctions::fEChannel,
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 				_cADC_EChannel[j][itr].initialize(_name,
 					"ADC", hcaldqm::hashfunctions::fEChannel,
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
@@ -79,10 +74,6 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
 	_cLETDCvsADC.initialize(_name, "LETDCvsADC",
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
-	_cTETDCvsADC.initialize(_name, "TETDCvsADC",
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
@@ -119,7 +110,6 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 				char aux2[100];
 				sprintf(aux2, "/Crate%d_Slot%d/TS%d", crate, slot, i);
 				_cLETDCvsADC_EChannel[i][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
-				_cTETDCvsADC_EChannel[i][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
 				_cLETDC_EChannel[i][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
 				_cADC_EChannel[i][itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
 			}
@@ -129,7 +119,6 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 
 	_cShapeCut.book(ib, _subsystem);
 	_cLETDCvsADC.book(ib, _subsystem);
-	_cTETDCvsADC.book(ib, _subsystem);
 	_cLETDC.book(ib, _subsystem);
 	_cADC.book(ib, _subsystem);
 
@@ -194,9 +183,6 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 			_cLETDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
 							  frame[j].le_tdc());
 			_cLETDCvsADC.fill(frame[j].adc(), frame[j].le_tdc());
-			_cTETDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
-							  frame[j].te_tdc());
-			_cTETDCvsADC.fill(frame[j].adc(), frame[j].te_tdc());
 			_cLETDC_EChannel[j][index].fill(eid, frame[j].le_tdc());
 			_cLETDC.fill(frame[j].le_tdc());
 			_cADC_EChannel[j][index].fill(eid, frame[j].adc());
