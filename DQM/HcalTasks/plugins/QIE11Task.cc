@@ -53,20 +53,28 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 			_cShapeCut_EChannel[itr].initialize(_name,
 				"ShapeCut", hcaldqm::hashfunctions::fEChannel,
 				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
-				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11fC_300000));
+			_cTDCvsTS_EChannel[itr].initialize(_name, 
+				"TDCvsTS", hcaldqm::hashfunctions::fEChannel, 
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11TDC_64));
+			_cTDCTime_EChannel[itr].initialize(_name,
+				"TDCTime", hcaldqm::hashfunctions::fEChannel,
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTime_ns_250),
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 			for (unsigned int j=0; j<10; j++) {
 				_cTDCvsADC_EChannel[j][itr].initialize(_name,
 					"TDCvsADC", hcaldqm::hashfunctions::fEChannel,
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11ADC_256),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11TDC_64),
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 				_cADC_EChannel[j][itr].initialize(_name,
 					"ADC", hcaldqm::hashfunctions::fEChannel,
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11ADC_256),
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 				_cTDC_EChannel[j][itr].initialize(_name,
 					"TDC", hcaldqm::hashfunctions::fEChannel,
-					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
+					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11TDC_64),
 					new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 			}
 			++itr;
@@ -75,16 +83,16 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 	_cShapeCut.initialize(_name,
 		"ShapeCut", 
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11fC_300000));
 	_cTDCvsADC.initialize(_name, "TDCvsADC",
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11ADC_256),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11TDC_64),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 	_cTDC.initialize(_name, "TDC",
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11TDC_64),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 	_cADC.initialize(_name, "ADC",
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE11ADC_256),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 
 	itr = 0;
@@ -94,6 +102,8 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 			char aux[100];
 			sprintf(aux, "/Crate%d_Slot%d", crate, slot);
 			_cShapeCut_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
+			_cTDCvsTS_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
+			_cTDCTime_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
 			for (unsigned int j=0; j<10; j++) {
 				char aux2[100];
 				sprintf(aux2, "/Crate%d_Slot%d/TS%d", crate, slot, j);
@@ -147,12 +157,17 @@ QIE11Task::QIE11Task(edm::ParameterSet const& ps):
 			if (index == 0 || index == 1) {
 				//	shapes are after the cut
 				_cShapeCut_EChannel[index].fill(eid, j, adc2fC[frame[j].adc()]);	
-				
+				_cTDCvsTS_EChannel[index].fill(eid, j, frame[j].tdc());	
 
 				//	w/o a cut
 				_cTDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
 					frame[j].tdc());
 				_cTDC_EChannel[j][index].fill(eid, frame[j].tdc());
+				if (frame[j].tdc() < 50) {
+					// Each TDC count is 0.5 ns. 
+					// tdc == 62 or 63 means value was below or above threshold for whole time slice. 
+					_cTDCTime_EChannel[index].fill(eid, j*25. + (frame[j].tdc() / 2.));
+				}
 				_cADC_EChannel[j][index].fill(eid, frame[j].adc());
 			}
 			_cShapeCut.fill(eid, j, adc2fC[frame[j].adc()]);
