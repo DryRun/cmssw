@@ -49,6 +49,15 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 				"ShapeCut", hcaldqm::hashfunctions::fEChannel,
 				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
 				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10fC_300000));
+			_cLETDCTime_EChannel[itr].initialize(_name,
+				"LETDCTime", hcaldqm::hashfunctions::fEChannel,
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTime_ns_250),
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
+			_cLETDCvsTS_EChannel[itr].initialize(_name, 
+				"TDCvsTS", hcaldqm::hashfunctions::fEChannel, 
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
+				new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10TDC_64));
+
 			for (unsigned int j=0; j<nTS; j++) {
 				_cLETDCvsADC_EChannel[j][itr].initialize(_name,
 					"LETDCvsADC", hcaldqm::hashfunctions::fEChannel,
@@ -98,6 +107,13 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 										 new quantity::ElectronicsQuantity(quantity::fFiberCh),
 										 new quantity::ValueQuantity(quantity::fN));
 
+	// OCCUPANCY IN DETECTOR COORDINATES
+	_cOccupancy_depth.initialize(_name, "Occupancy",
+		hcaldqm::hashfunctions::fdepth,
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN));
+
 
 	itr = 0;
 	for(unsigned int crate=22; crate < 33; ++crate) {
@@ -106,6 +122,8 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 			char aux[100];
 			sprintf(aux, "/Crate%d_Slot%d", crate, slot);
 			_cShapeCut_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
+			_cLETDCTime_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
+			_cLETDCvsTS_EChannel[itr].book(ib, _emap, _filter_slot[itr], _subsystem, aux);
 			for (unsigned int i=0; i<nTS; i++) {
 				char aux2[100];
 				sprintf(aux2, "/Crate%d_Slot%d/TS%d", crate, slot, i);
@@ -123,7 +141,8 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 	_cADC.book(ib, _subsystem);
 
 	_cOccupancy_Crate.book(ib, _emap, _subsystem);
-		_cOccupancy_CrateSlot.book(ib, _emap, _subsystem);
+	_cOccupancy_CrateSlot.book(ib, _emap, _subsystem);
+	_cOccupancy_depth.book(ib, _emap, _subsystem);
 
 	_ehashmap.initialize(_emap, electronicsmap::fD2EHashMap);
 }
@@ -167,6 +186,7 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 
 		_cOccupancy_Crate.fill(eid);
 		_cOccupancy_CrateSlot.fill(eid);
+		_cOccupancy_depth.fill(did);
 
 		//	iterate thru all TS and fill
 		for (int j=0; j<frame.samples(); j++)
@@ -178,7 +198,6 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 
 				_cShapeCut.fill(j, constants::adc2fC[frame[j].adc()]);
 			}
-			
 			//	w/o a cut
 			_cLETDCvsADC_EChannel[j][index].fill(eid, frame[j].adc(), 
 							  frame[j].le_tdc());
@@ -187,6 +206,14 @@ QIE10Task::QIE10Task(edm::ParameterSet const& ps):
 			_cLETDC.fill(frame[j].le_tdc());
 			_cADC_EChannel[j][index].fill(eid, frame[j].adc());
 			_cADC.fill(frame[j].adc());
+			_cLETDCvsTS_EChannel[index].fill(eid, j, frame[j].le_tdc());	
+
+			// TDC conversion to time
+			if (frame[j].le_tdc() < 50) {
+				// Each TDC count is 0.5 ns. 
+				// tdc == 62 or 63 means value was below or above threshold for whole time slice. 
+				_cLETDCTime_EChannel[index].fill(eid, j*25. + (frame[j].le_tdc() / 2.));
+			}
 		}
 
 		mqie10[did.rawId()] = frame;

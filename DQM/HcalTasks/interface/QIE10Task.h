@@ -55,9 +55,10 @@ class QIE10Task : public hcaldqm::DQTask
 		//	hcaldqm::Containers
 		hcaldqm::ContainerProf1D	_cShapeCut_EChannel[36];
 		hcaldqm::Container2D	_cLETDCvsADC_EChannel[10][36];
+		hcaldqm::Container2D    _cLETDCvsTS_EChannel[36];
 		hcaldqm::Container1D _cLETDC_EChannel[10][36];
 		hcaldqm::Container1D _cADC_EChannel[10][36];
-		hcaldqm::Container2D _cOccupancy_depth;
+		hcaldqm::Container1D _cLETDCTime_EChannel[36];
 
 		//	Correlation Plots for 8 vs 10
 		hcaldqm::Container2D _cADCCorrelation10vs8_DChannel[10];
@@ -86,6 +87,8 @@ class QIE10Task : public hcaldqm::DQTask
 		hcaldqm::Container2D _cOccupancy_Crate;
 		hcaldqm::Container2D _cOccupancy_CrateSlot;
 
+		// Detector coordinates
+		hcaldqm::Container2D _cOccupancy_depth;
 };
 
 #endif

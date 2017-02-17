@@ -63,7 +63,9 @@ class QIE11Task : public hcaldqm::DQTask
 		//	hcaldqm::Containers
 		hcaldqm::ContainerProf1D	_cShapeCut_EChannel[2];
 		hcaldqm::Container2D	_cTDCvsADC_EChannel[10][2];
+		hcaldqm::Container2D    _cTDCvsTS_EChannel[2];
 		hcaldqm::Container1D _cTDC_EChannel[10][2];
+		hcaldqm::Container1D _cTDCTime_EChannel[2];
 		hcaldqm::Container1D _cADC_EChannel[10][2];
 		hcaldqm::Container2D _cOccupancy_depth;
 
