@@ -431,7 +431,7 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 			digi.size()-1);
 		if (sumQ<_lowHF)
 			continue;
-		HcalDetId did = digi.id();
+		HcalDetId did = digi.detid();
 		HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
 
 		double aveTS = hcaldqm::utilities::aveTS_v10<QIE10DataFrame>(digi, 2.5, 0,
