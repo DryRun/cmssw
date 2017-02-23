@@ -57,7 +57,9 @@ namespace hcaldqm
 
 				void print();
 				
-
+				inline void printEmapAddress() {
+					std::cout << "[ElectronicsMap::printEmapAddress] DEBUG : " << &_emap << std::endl;
+				}
 			private:
 				//	configures how to use emap
 				ElectronicsMapType	_etype;
