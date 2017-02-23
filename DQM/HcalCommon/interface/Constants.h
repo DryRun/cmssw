@@ -98,7 +98,7 @@ namespace hcaldqm
 			FIBER_uTCA_MAX2-FIBER_uTCA_MIN2+1;
 
 		int const FIBERCH_MIN = 0;
-		int const FIBERCH_MAX = 3;
+		int const FIBERCH_MAX = 5;
 		int const FIBERCH_NUM = FIBERCH_MAX-FIBERCH_MIN+1;
 
 		//	TP SLBs, Fibers
