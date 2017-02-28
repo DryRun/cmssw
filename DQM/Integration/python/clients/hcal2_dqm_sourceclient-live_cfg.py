@@ -12,7 +12,9 @@ import os, sys, socket, string
 #	Standard CMSSW Imports/Definitions
 #-------------------------------------
 import FWCore.ParameterSet.Config as cms
-process			= cms.Process('HCALDQM')
+from Configuration.StandardSequences.Eras import eras
+process                 = cms.Process('HCALDQM',eras.Run2_2017)
+#process			= cms.Process('HCALDQM')
 subsystem		= 'Hcal2'
 cmssw			= os.getenv("CMSSW_VERSION").split("_")
 debugstr		= "### HcalDQM::cfg::DEBUG: "
@@ -63,6 +65,8 @@ process.load("EventFilter.HcalRawToDigi.HcalRawToDigi_cfi")
 process.load("SimCalorimetry.HcalTrigPrimProducers.hcaltpdigi_cff")
 process.load("RecoLocalCalo.Configuration.hcalLocalReco_cff")
 process.load('CondCore.CondDB.CondDB_cfi')
+process.load("RecoLocalCalo.HcalRecProducers.hfprereco_cfi")
+process.load("RecoLocalCalo.HcalRecProducers.hbheplan1_cfi")
 
 #-------------------------------------
 #	CMSSW/Hcal non-DQM Related Module Settings
@@ -106,7 +110,7 @@ process.emulTPPrim.FG_threshold = cms.uint32(2)
 process.emulTPPrim.InputTagFEDRaw = rawTag
 process.emulTPSec.FG_threshold = cms.uint32(2)
 process.emulTPSec.InputTagFEDRaw = rawTag
-process.hbhereco = process.hbheprereco.clone()
+#process.hbhereco = process.hbheprereco.clone() # This is hbheplan1 now
 
 #	set the tag for default unpacker
 process.hcalDigis.InputLabel = rawTag
@@ -145,9 +149,13 @@ primFEDs[len(primFEDs):] = [x+724 for x in range(8)]
 primFEDs[len(primFEDs):] = [1118,1119,1120,1121,1122,1123]
 print "Primary FEDs to be Unpacked:", primFEDs
 process.primDigis.FEDs = cms.untracked.vint32(primFEDs)
-process.hbhereco.digiLabel = cms.InputTag("primDigis")
+#process.hbhereco.digiLabel = cms.InputTag("primDigis")
+#process.horeco.digiLabel = cms.InputTag("primDigis")
+#process.hfreco.digiLabel = cms.InputTag("primDigis")
+process.hbheprereco.digiLabelQIE8 = cms.InputTag("primDigis")
+process.hbheprereco.digiLabelQIE11 = cms.InputTag("primDigis")
 process.horeco.digiLabel = cms.InputTag("primDigis")
-process.hfreco.digiLabel = cms.InputTag("primDigis")
+process.hfprereco.digiLabel = cms.InputTag("primDigis")
 
 process.secDigis = process.hcalDigis.clone()
 process.secDigis.InputLabel = rawTag
@@ -172,7 +180,7 @@ process.tpComparisonTask.subsystem = cms.untracked.string(subsystem)
 #	Settigns for the Primary Modules
 #-------------------------------------
 oldsubsystem = subsystem
-process.recHitTask.tagHBHE = cms.untracked.InputTag("hbhereco")
+process.recHitTask.tagHBHE = cms.untracked.InputTag("hbheplan1")
 process.recHitTask.tagHO = cms.untracked.InputTag("horeco")
 process.recHitTask.tagHF = cms.untracked.InputTag("hfreco")
 process.recHitTask.runkeyVal = runType
@@ -203,11 +211,14 @@ process.preRecoPath = cms.Path(
 		*process.secDigis
 		*process.emulTPPrim
 		*process.emulTPSec
+		*process.hfprereco
+		*process.hbheprereco
 )
 
 process.recoPath = cms.Path(
 		process.hfreco
-		*process.hbhereco
+		#*process.hbhereco
+		*process.hbheplan1
 		*process.horeco
 )
 
