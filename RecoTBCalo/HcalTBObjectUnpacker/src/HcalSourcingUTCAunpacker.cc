@@ -19,12 +19,13 @@ struct eventHeader {
 
   
 void HcalSourcingUTCAunpacker::unpack(const FEDRawData&  raw, const HcalElectronicsMap emap, std::auto_ptr<HcalUHTRhistogramDigiCollection>& histoDigiCollection, bool DEBUG) const {
-  std::cout << "[HcalSourcingUTCAunpacker::unpack] DEBUG : &emap = " << &emap << std::endl;
+  //std::cout << "[HcalSourcingUTCAunpacker::unpack] DEBUG : &emap = " << &emap << std::endl;
   if(DEBUG) std::cout << "Unpacker Time!" << std::endl; 
 
   if (raw.size()<4*38) {
 //    throw cms::Exception("Missing Data") << "Less than 1 histogram in event";
-    std::cout << "Warning: raw size in bytes: " << raw.size() << std::endl;
+    //std::cout << "Warning: raw size in bytes: " << raw.size() << ". Skipping this FED." << std::endl;
+    return;
   }
   const uint32_t* pData = (const uint32_t*) raw.data(); 
   // if(DEBUG) {
@@ -81,7 +82,7 @@ void HcalSourcingUTCAunpacker::unpack(const FEDRawData&  raw, const HcalElectron
       }
       continue;
     }
-    std::cout << "putting event with Det Id: " << ((HcalDetId)did) << ", EID " << eid << std::endl;
+    //std::cout << "putting event with Det Id: " << ((HcalDetId)did) << ", EID " << eid << std::endl;
     if(DEBUG) std::cout << "Det Id: " << ((HcalDetId)did) << std::endl;
     HcalUHTRhistogramDigiMutable digi = histoDigiCollection->addHistogram( (HcalDetId)did );
     for(unsigned int iBin = 0; iBin<numBins+1; iBin++) {

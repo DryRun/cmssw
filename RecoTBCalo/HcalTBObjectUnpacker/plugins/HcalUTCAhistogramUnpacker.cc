@@ -12,7 +12,7 @@ using namespace std;
   HcalUTCAhistogramUnpacker::HcalUTCAhistogramUnpacker(edm::ParameterSet const& conf)
   {
     rawDump = conf.getParameter<bool>("rawDump"); //prints out lots of debugging info including the raw data
-    fedNumber = conf.getParameter<int>("fedNumber");
+    fedNumbers_ = conf.getParameter<std::vector<int> >("fedNumbers");
     tok_raw_ = consumes<FEDRawDataCollection>(conf.getParameter<edm::InputTag>("fedRawDataCollectionTag"));
     produces<HcalUHTRhistogramDigiCollection>();
   }
@@ -35,10 +35,11 @@ using namespace std;
     const HcalElectronicsMap* readoutMap = pSetup->getHcalMapping();
 
     std::auto_ptr<HcalUHTRhistogramDigiCollection> hd(new HcalUHTRhistogramDigiCollection);
-
-    const FEDRawData& fed = rawraw->FEDData(fedNumber);
-
-    histoUnpacker_.unpack(fed, *readoutMap, hd, rawDump);
+    
+    for (auto& it_fed : fedNumbers_) {
+      const FEDRawData& fed = rawraw->FEDData(it_fed);
+      histoUnpacker_.unpack(fed, *readoutMap, hd, rawDump);
+    }
     e.put(hd);
   }
 
