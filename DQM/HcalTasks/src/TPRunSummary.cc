@@ -46,11 +46,11 @@ namespace hcaldqm
 		ContainerSingle2D cSummary;
 		ContainerXXX<double> xDeadD, xDeadE, xEtMsm, xFGMsm;
 		ContainerXXX<double> xNumCorr;
-		xDeadD.initialize(hashfunctions::fFED);
-		xDeadE.initialize(hashfunctions::fFED);
-		xEtMsm.initialize(hashfunctions::fFED);
-		xFGMsm.initialize(hashfunctions::fFED);
-		xNumCorr.initialize(hashfunctions::fFED);
+		xDeadD.initialize(hashfunctions::fSubdet);
+		xDeadE.initialize(hashfunctions::fSubdet);
+		xEtMsm.initialize(hashfunctions::fSubdet);
+		xFGMsm.initialize(hashfunctions::fSubdet);
+		xNumCorr.initialize(hashfunctions::fSubdet);
 		cOccupancyData_depthlike.initialize(_taskname, "OccupancyData",
 			new quantity::TrigTowerQuantity(quantity::fTTieta),
 			new quantity::TrigTowerQuantity(quantity::fTTiphi),
@@ -80,7 +80,7 @@ namespace hcaldqm
 			new quantity::TrigTowerQuantity(quantity::fTTiphi),
 			new quantity::ValueQuantity(quantity::fRatio_0to2),0);
 		cSummary.initialize(_name, "Summary",
-			new quantity::FEDQuantity(_vFEDs),
+			new quantity::DetectorQuantity(quantity::fSubdet),
 			new quantity::FlagQuantity(vflags),
 			new quantity::ValueQuantity(quantity::fState),0);
 
@@ -130,42 +130,29 @@ namespace hcaldqm
 		}
 
 		std::vector<flag::Flag> sumflags;
-		for (std::vector<uint32_t>::const_iterator it=_vhashFEDs.begin();
-			it!=_vhashFEDs.end(); ++it)
+		for (std::vector<uint32_t>::const_iterator it=_vhashSubdets.begin();
+			it!=_vhashSubdets.end(); ++it)
 		{
 			flag::Flag fSum("TP");
 			HcalElectronicsId eid(*it);
 
-			std::vector<uint32_t>::const_iterator cit=std::find(
-				_vcdaqEids.begin(), _vcdaqEids.end(), *it);
-			if (cit==_vcdaqEids.end())
-			{
-				//	not @cDAQ
-				sumflags.push_back(flag::Flag("TP", flag::fNCDAQ));
-				continue;
-			}
+			double etmsmfr = xNumCorr.get(eid)>0?
+				double(xEtMsm.get(eid))/double(xNumCorr.get(eid)):0;
+			double fgmsmfr = xNumCorr.get(eid)>0?
+				double(xFGMsm.get(eid))/double(xNumCorr.get(eid)):0;
 
-			//	@cDAQ
-			if (utilities::isFEDHBHE(eid) || utilities::isFEDHF(eid))
-			{
-				double etmsmfr = xNumCorr.get(eid)>0?
-					double(xEtMsm.get(eid))/double(xNumCorr.get(eid)):0;
-				double fgmsmfr = xNumCorr.get(eid)>0?
-					double(xFGMsm.get(eid))/double(xNumCorr.get(eid)):0;
-
-				if (etmsmfr>=_thresh_EtMsmRate_high)
-					vflags[fEtMsm]._state = flag::fBAD;
-				else if (etmsmfr>=_thresh_EtMsmRate_low)
-					vflags[fEtMsm]._state = flag::fPROBLEMATIC;
-				else
-					vflags[fEtMsm]._state = flag::fGOOD;
-				if (fgmsmfr>=_thresh_FGMsmRate_high)
-					vflags[fFGMsm]._state = flag::fBAD;
-				else if (fgmsmfr>=_thresh_FGMsmRate_low)
-					vflags[fFGMsm]._state = flag::fPROBLEMATIC;
-				else
-					vflags[fFGMsm]._state = flag::fGOOD;
-			}
+			if (etmsmfr>=_thresh_EtMsmRate_high)
+				vflags[fEtMsm]._state = flag::fBAD;
+			else if (etmsmfr>=_thresh_EtMsmRate_low)
+				vflags[fEtMsm]._state = flag::fPROBLEMATIC;
+			else
+				vflags[fEtMsm]._state = flag::fGOOD;
+			if (fgmsmfr>=_thresh_FGMsmRate_high)
+				vflags[fFGMsm]._state = flag::fBAD;
+			else if (fgmsmfr>=_thresh_FGMsmRate_low)
+				vflags[fFGMsm]._state = flag::fPROBLEMATIC;
+			else
+				vflags[fFGMsm]._state = flag::fGOOD;
 
 			//	combine
 			int iflag=0;

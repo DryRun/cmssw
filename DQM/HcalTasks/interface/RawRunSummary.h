@@ -26,14 +26,9 @@ namespace hcaldqm
 
 			electronicsmap::ElectronicsMap _ehashmap;
 
-			//	some useful vectors - not to reintialize all the time
-			std::vector<uint32_t> _vhashVME, _vhashuTCA;
-			std::vector<int> _vFEDsVME, _vFEDsuTCA;
-			filter::HashFilter _filter_VME, _filter_uTCA;
-
 			//	Containers to store info for the whole run
-			Container2D _cEvnMsm_ElectronicsVME, _cEvnMsm_ElectronicsuTCA;
-			Container2D _cBcnMsm_ElectronicsVME, _cBcnMsm_ElectronicsuTCA;
+			Container2D _cEvnMsm_Electronics;
+			Container2D _cBcnMsm_Electronics;
 			Container2D _cBadQuality_depth;
 
 			bool _booked;
