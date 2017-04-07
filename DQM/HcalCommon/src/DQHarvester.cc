@@ -82,6 +82,12 @@ namespace hcaldqm
 	                }
 				}
 			}
+		} else {
+			// For offline, use subdetectors instead of FEDs
+			_vSubdets = utilities::getSubdetList(_emap);
+			for (auto& it_subdet : _vSubdets) {
+				_vhashSubdets.push_back(HcalDetId(it_subdet, 1, 1, 1).rawId());
+			}
 		}
 
 		//	get the Hcal Channels Quality for channels that are not 0
