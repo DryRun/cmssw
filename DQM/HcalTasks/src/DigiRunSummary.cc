@@ -123,10 +123,10 @@ namespace hcaldqm
 				_xNChs.get(eid)+=0;
 			_cOccupancy_depth.fill(did, cOccupancy_depth.getBinContent(did));
 			//	digi size
-			cDigiSize_Subdet.getMean(eid)!=
+			cDigiSize_Subdet.getMean(did)!=
 				constants::DIGISIZE[did.subdet()-1]?
 				_xDigiSize.get(eid)++:_xDigiSize.get(eid)+=0;
-			cDigiSize_Subdet.getRMS(eid)!=0?
+			cDigiSize_Subdet.getRMS(did)!=0?
 				_xDigiSize.get(eid)++:_xDigiSize.get(eid)+=0;
 		}
 

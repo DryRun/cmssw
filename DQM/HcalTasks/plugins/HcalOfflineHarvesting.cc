@@ -1,5 +1,3 @@
-#define HIDE_RAW
-
 #include "DQM/HcalTasks/interface/HcalOfflineHarvesting.h"
 
 using namespace hcaldqm;
@@ -12,7 +10,9 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 	_vsumgen.resize(nSummary);
 	_vmarks.resize(nSummary);
 	_vnames.resize(nSummary);
+	#ifndef HIDE_RAW
 	_vnames[fRaw]="RawTask";
+	#endif
 	_vnames[fDigi]="DigiTask";
 	_vnames[fReco]="RecHitTask";
 	_vnames[fTP]="TPTask";

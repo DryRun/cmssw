@@ -1,3 +1,5 @@
+#define HIDE_RAW
+
 #ifndef HcalOfflineHarvesting_h
 #define HcalOfflineHarvesting_h
 
@@ -52,6 +54,7 @@ class HcalOfflineHarvesting : public hcaldqm::DQHarvester
 		virtual void _dqmEndJob(DQMStore::IBooker&,
 			DQMStore::IGetter&);
 
+		#ifndef HIDE_RAW
 		enum Summary
 		{
 			fRaw=0,
@@ -60,6 +63,16 @@ class HcalOfflineHarvesting : public hcaldqm::DQHarvester
 			fTP=3,
 			nSummary=4
 		};
+		#else
+		// Hide fRaw
+		enum Summary
+		{
+			fDigi=0,
+			fReco=1,
+			fTP=2,
+			nSummary=3
+		};
+		#endif
 
 		//	vector of Summary Generators and marks of being present
 		//	by default all false
