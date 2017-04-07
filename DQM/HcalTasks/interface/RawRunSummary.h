@@ -27,8 +27,8 @@ namespace hcaldqm
 			electronicsmap::ElectronicsMap _ehashmap;
 
 			//	Containers to store info for the whole run
-			Container2D _cEvnMsm_Electronics;
-			Container2D _cBcnMsm_Electronics;
+			Container2D _cEvnMsm_Subdet;
+			Container2D _cBcnMsm_Subdet;
 			Container2D _cBadQuality_depth;
 
 			bool _booked;
