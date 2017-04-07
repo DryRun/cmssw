@@ -51,6 +51,22 @@ namespace hcaldqm
 			return tid.rawId();
 		}
 
+		std::vector<HcalSubdetector> getSubdetList(HcalElectronicsMap const* emap) {
+			std::vector<HcalSubdetector> vSubdets;
+			std::vector<HcalElectronicsId> vids = 
+				emap->allElectronicsIdPrecision();
+			for (std::vector<HcalElectronicsId>::const_iterator
+				it=vids.begin(); it!=vids.end(); ++it)
+			{
+				HcalDetId did = emap->lookup(*it);
+				HcalSubdetector subdet = did.subdet();
+				if (std::find(vSubdets.begin(), vSubdets.end(), subdet) == vSubdets.end()) {
+					vSubdets.push_back(subdet);
+				}
+			}
+			return vSubdets;
+		}
+
 		std::vector<int> getFEDList(HcalElectronicsMap const* emap)
 		{
 			std::vector<int> vfeds;

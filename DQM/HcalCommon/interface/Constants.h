@@ -145,6 +145,12 @@ namespace hcaldqm
 		std::string const TPSUBDET_NAME[TPSUBDET_NUM] = {"HBHE", "HF"};
 		std::string const TPSUBDETPM_NAME[2*TPSUBDET_NUM] = {
 			"HBHEM", "HBHEP", "HFM", "HFP"};
+		std::map<HcalSubdetector, std::string> const SUBDETENUM_NAME = {
+			{HcalBarrel, "HB"}, 
+			{HcalEndcap, "HE"}, 
+			{HcalOuter, "HO"},
+			{HcalForward, "HF"},
+		};
 
 		//	iphis
 		int const IPHI_MIN = 1;
