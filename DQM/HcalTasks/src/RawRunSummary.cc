@@ -19,13 +19,15 @@ namespace hcaldqm
 		_ehashmap.initialize(_emap, electronicsmap::fD2EHashMap);
 
 		//	INTIALIZE CONTAINERS ACTING AS HOLDERS OF RUN INFORAMTION
-		_cEvnMsm_Subdet.initialize(_name, "EvnMsm",
-			hashfunctions::fSubdet,
+		_cEvnMsm_Electronics.initialize(_name, "EvnMsm",
+			hashfunctions::fElectronics,
 			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
-		_cBcnMsm_Subdet.initialize(_name, "BcnMsm",
-			hashfunctions::fSubdet,
+		_cBcnMsm_Electronics.initialize(_name, "BcnMsm",
+			hashfunctions::fElectronics,
 			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		_cBadQuality_depth.initialize(_name, "BadQuality",
 			 hashfunctions::fdepth,
@@ -65,16 +67,18 @@ namespace hcaldqm
 		_xEvn.reset(); _xBcn.reset(); _xBadQ.reset();
 		
 		//	INITIALIZE LUMI BASED HISTOGRAMS
-		Container1D cEvnMsm_Subdet;
-		Container1D cBcnMsm_Subdet;
+		Container2D cEvnMsm_Electronics;
+		Container2D cBcnMsm_Electronics;
 		Container2D cBadQuality_depth;
-		cEvnMsm_Subdet.initialize(_taskname, "EvnMsm",
-			hashfunctions::fSubdet,
+		cEvnMsm_Electronics.initialize(_taskname, "EvnMsm",
+			hashfunctions::fElectronics,
 			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
-		cBcnMsm_Subdet.initialize(_taskname, "BcnMsm",
-			hashfunctions::fSubdet,
+		cBcnMsm_Electronics.initialize(_taskname, "BcnMsm",
+			hashfunctions::fElectronics,
 			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		cBadQuality_depth.initialize(_taskname, "BadQuality",
 			 hashfunctions::fdepth,
@@ -83,8 +87,8 @@ namespace hcaldqm
 			 new quantity::ValueQuantity(quantity::fN),0);
 
 		//	LOAD LUMI BASED HISTOGRAMS
-		cEvnMsm_Subdet.load(ig, _emap, _subsystem);
-		cBcnMsm_Subdet.load(ig, _emap, _subsystem);
+		cEvnMsm_Electronics.load(ig, _emap, _subsystem);
+		cBcnMsm_Electronics.load(ig, _emap, _subsystem);
 		cBadQuality_depth.load(ig, _emap, _subsystem);
 		MonitorElement *meNumEvents = ig.get(_subsystem+
 			"/RunInfo/NumberOfEvents");
@@ -93,8 +97,8 @@ namespace hcaldqm
 		//	BOOK for the very first time
 		if (!_booked)
 		{
-			_cEvnMsm_Subdet.book(ib, _emap, _subsystem);
-			_cBcnMsm_Subdet.book(ib, _emap, _subsystem);
+			_cEvnMsm_Electronics.book(ib, _emap, _subsystem);
+			_cBcnMsm_Electronics.book(ib, _emap, _subsystem);
 			_cBadQuality_depth.book(ib, _emap, _subsystem);
 			_booked=true;
 		}
@@ -112,13 +116,13 @@ namespace hcaldqm
 
 			_xBadQ.get(eid)+=cBadQuality_depth.getBinContent(did);
 			_cBadQuality_depth.fill(did, cBadQuality_depth.getBinContent(did));
-			_xEvn.get(did)+=cEvnMsm_Subdet.getBinContent(did);
-			_xBcn.get(did)+=cBcnMsm_Subdet.getBinContent(did);
+			_xEvn.get(eid)+=cEvnMsm_Electronics.getBinContent(eid);
+			_xBcn.get(eid)+=cBcnMsm_Electronics.getBinContent(eid);
 
-			_cEvnMsm_Subdet.fill(did, 
-				cEvnMsm_Subdet.getBinContent(did));
-			_cBcnMsm_Subdet.fill(did, 
-				cBcnMsm_Subdet.getBinContent(did));
+			_cEvnMsm_Electronics.fill(eid, 
+				cEvnMsm_Electronics.getBinContent(eid));
+			_cBcnMsm_Electronics.fill(eid, 
+				cBcnMsm_Electronics.getBinContent(eid));
 		}
 		
 

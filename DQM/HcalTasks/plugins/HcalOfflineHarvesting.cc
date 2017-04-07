@@ -1,3 +1,5 @@
+#define HIDE_RAW
+
 #include "DQM/HcalTasks/interface/HcalOfflineHarvesting.h"
 
 using namespace hcaldqm;
@@ -17,7 +19,9 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 	for (uint32_t i=0; i<_vmarks.size(); i++)
 		_vmarks[i]=false;
 
+	#ifndef HIDE_RAW
 	_vsumgen[fRaw]=new hcaldqm::RawRunSummary("RawRunHarvesting", _vnames[fRaw],ps);
+	#endif
 	_vsumgen[fDigi]=new hcaldqm::DigiRunSummary("DigiRunHarvesting", _vnames[fDigi],ps);
 	_vsumgen[fReco]=new hcaldqm::RecoRunSummary("RecoRunHarvesting", _vnames[fReco],ps);
 	_vsumgen[fTP]=new hcaldqm::TPRunSummary("TPRunHarvesting", _vnames[fTP],ps);
@@ -41,8 +45,10 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 	DQMStore::IGetter& ig, edm::LuminosityBlock const& lb, 
 	edm::EventSetup const& es)
 {	
+	#ifndef HIDE_RAW
 	if (ig.get(_subsystem+"/"+_vnames[fRaw]+"/EventsTotal")!=NULL)
 		_vmarks[fRaw]=true;
+	#endif
 	if (ig.get(_subsystem+"/"+_vnames[fDigi]+"/EventsTotal")!=NULL)
 		_vmarks[fDigi]=true;
 	if (ig.get(_subsystem+"/"+_vnames[fTP]+"/EventsTotal")!=NULL)
@@ -70,11 +76,13 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 {
 	//	OBTAIN/SET WHICH MODULES ARE PRESENT
 	int num=0; std::map<std::string, int> datatiers;
+	#ifndef HIDE_RAW
 	if (_vmarks[fRaw])
 	{
 		datatiers.insert(std::pair<std::string, int>("RAW",num));
 		num++;
 	}
+	#endif
 	if (_vmarks[fDigi])
 	{
 		datatiers.insert(std::pair<std::string, int>("DIGI",num));
@@ -99,14 +107,12 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 	{
 		ib.setCurrentFolder(_subsystem+"/EventInfo");
 		_reportSummaryMap = ib.book2D("reportSummaryMap", "reportSummaryMap",
-			_vFEDs.size(), 0, _vFEDs.size(), num,0,num);
+			_vSubdets.size(), 0, _vSubdets.size(), num,0,num);
 		//	x axis labels
 		
-		for (uint32_t i=0; i<_vFEDs.size(); i++)
+		for (uint32_t i=0; i<_vSubdets.size(); i++)
 		{
-			char name[5];
-			sprintf(name, "%d", _vFEDs[i]);
-			_reportSummaryMap->setBinLabel(i+1, name, 1);
+			_reportSummaryMap->setBinLabel(i+1, hcaldqm::constants::SUBDETENUM_NAME.at(_vSubdets[i]), 1);
 		}
 		//	y axis lables
 		for (std::map<std::string, int>::const_iterator
@@ -138,14 +144,15 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 			std::cout << "********************" << std::endl;
 			std::cout << "SUMMARY" << std::endl;
 		}
-		for (uint32_t ifed=0; ifed<_vFEDs.size(); ifed++)
+		//for (uint32_t ifed=0; ifed<_vFEDs.size(); ifed++)
+		for (uint32_t isubdet=0; isubdet<_vSubdets.size(); isubdet++)
 		{
-			_reportSummaryMap->setBinContent(ifed+1, 
-				datatiers[flags[ifed]._name]+1, (int)flags[ifed]._state);
+			_reportSummaryMap->setBinContent(isubdet+1, 
+				datatiers[flags[isubdet]._name]+1, (int)flags[isubdet]._state);
 			if (_debug>0)
 			{
-				std::cout << "FED=" << _vFEDs[ifed] << std::endl;
-				std::cout << flags[ifed]._name << "  " << flags[ifed]._state
+				std::cout << "Subdet =" << hcaldqm::constants::SUBDETENUM_NAME.at(_vSubdets[isubdet]) << std::endl;
+				std::cout << flags[isubdet]._name << "  " << flags[isubdet]._state
 				<<std::endl;
 			}
 		}
