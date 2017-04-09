@@ -75,7 +75,7 @@ namespace hcaldqm
 			new quantity::ValueQuantity(quantity::fN),0);
 
 		cSummary.initialize(_name, "Summary",
-			new quantity::DetectorQuantity(hcaldqm::quantity::fSubdet);
+			new quantity::DetectorQuantity(hcaldqm::quantity::fSubdet),
 			new quantity::FlagQuantity(vflags),
 			new quantity::ValueQuantity(quantity::fState),0);
 

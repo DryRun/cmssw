@@ -150,6 +150,7 @@ namespace hcaldqm
 			{HcalEndcap, "HE"}, 
 			{HcalOuter, "HO"},
 			{HcalForward, "HF"},
+			{HcalOther, "HcalOther"}
 		};
 
 		//	iphis

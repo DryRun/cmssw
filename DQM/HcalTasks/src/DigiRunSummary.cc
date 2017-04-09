@@ -135,7 +135,7 @@ namespace hcaldqm
 		vtmpflags[fNChsHF]=flag::Flag("NChsHF");
 		vtmpflags[fUnknownIds]=flag::Flag("UnknownIds");
 		for (auto& it_subdet : _vhashSubdets) {
-			HcalDetId did = HcalDetId(it_subdet, 1, 1, 1)
+			HcalDetId did(it_subdet);
 			//	reset all the tmp flags to fNA
 			//	MUST DO IT NOW! AS NCDAQ MIGHT OVERWRITE IT!
 			for (std::vector<flag::Flag>::iterator ft=vtmpflags.begin();
@@ -146,7 +146,7 @@ namespace hcaldqm
 				vtmpflags[fDigiSize]._state = flag::fBAD;
 			else
 				vtmpflags[fDigiSize]._state = flag::fGOOD;
-			if (utilities::isFEDHF(did))
+			if (it_subdet == HcalDetId(HcalForward, 1, 1, 1))
 			{
 				if (_xNChs.get(did)!=_xNChsNominal.get(did))
 					vtmpflags[fNChsHF]._state = flag::fBAD;
@@ -283,7 +283,7 @@ namespace hcaldqm
 			flag::Flag fSumRun("DIGI"); // summary flag for this FED
 			flag::Flag ffDead("Dead");
 			flag::Flag ffUniSlotHF("UniSlotHF");
-			HcalDetId did(it_subdet, 1, 1, 1);
+			HcalDetId did(it_subdet);
 
 			//	ITERATE OVER EACH LS
 			for (std::vector<LSSummary>::const_iterator itls=_vflagsLS.begin();

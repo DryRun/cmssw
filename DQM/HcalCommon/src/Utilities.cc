@@ -51,6 +51,8 @@ namespace hcaldqm
 			return tid.rawId();
 		}
 
+		// enum HcalSubdetector { HcalEmpty=0, HcalBarrel=1, HcalEndcap=2, HcalOuter=3, HcalForward=4, HcalTriggerTower=5, HcalOther=7 };
+		// Skip HcalOther!
 		std::vector<HcalSubdetector> getSubdetList(HcalElectronicsMap const* emap) {
 			std::vector<HcalSubdetector> vSubdets;
 			std::vector<HcalElectronicsId> vids = 
@@ -60,6 +62,9 @@ namespace hcaldqm
 			{
 				HcalDetId did = emap->lookup(*it);
 				HcalSubdetector subdet = did.subdet();
+				if (subdet == HcalOther) {
+					continue;
+				}
 				if (std::find(vSubdets.begin(), vSubdets.end(), subdet) == vSubdets.end()) {
 					vSubdets.push_back(subdet);
 				}
