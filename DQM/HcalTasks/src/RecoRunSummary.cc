@@ -57,8 +57,8 @@ namespace hcaldqm
 		ContainerSingle2D cSummary;
 		Container1D cTimingCut_HBHEPartition;
 		ContainerXXX<double> xUniHF, xUni;
-		xUni.initialize(hashfunctions::fFED);
-		xUniHF.initialize(hashfunctions::fFEDSlot);
+		xUni.initialize(hashfunctions::fSubdet);
+		xUniHF.initialize(hashfunctions::fSubdet);
 		cOccupancy_depth.initialize(_taskname, "Occupancy",
 			hashfunctions::fdepth,
 			new quantity::DetectorQuantity(quantity::fieta),
@@ -75,7 +75,7 @@ namespace hcaldqm
 			new quantity::ValueQuantity(quantity::fN),0);
 
 		cSummary.initialize(_name, "Summary",
-			new quantity::FEDQuantity(_vFEDs),
+			new quantity::DetectorQuantity(hcaldqm::quantity::fSubdet);
 			new quantity::FlagQuantity(vflags),
 			new quantity::ValueQuantity(quantity::fState),0);
 
@@ -98,10 +98,9 @@ namespace hcaldqm
 				continue;
 
 			HcalDetId did(it->rawId());
-			HcalElectronicsId eid = HcalElectronicsId(ehashmap.lookup(did));
 
 			if (did.subdet()==HcalForward)
-				xUniHF.get(eid)+=cOccupancyCut_depth.getBinContent(did);
+				xUniHF.get(did)+=cOccupancyCut_depth.getBinContent(did);
 		}
 
 
@@ -110,7 +109,7 @@ namespace hcaldqm
 			it!=xUniHF.end(); ++it)
 		{
 			uint32_t hash1 = it->first;
-			HcalElectronicsId eid1(hash1);
+			HcalDetId did1(hash1);
 			double x1 = it->second;
 			for (doubleCompactMap::const_iterator jt=xUniHF.begin();
 				jt!=xUniHF.end(); ++jt)
@@ -122,7 +121,7 @@ namespace hcaldqm
 				if (x2==0)
 					continue;
 				if (x1/x2<_thresh_unihf)
-					xUni.get(eid1)++;
+					xUni.get(did1)++;
 			}
 		}
 
@@ -147,7 +146,6 @@ namespace hcaldqm
 			it!=_vhashSubdets.end(); ++it)
 		{
 			flag::Flag fSum("RECO");
-			HcalElectronicsId eid(*it);
 			HcalDetId did(*it);
 
 			//	registered @cDAQ
@@ -160,7 +158,7 @@ namespace hcaldqm
 			}
 			if (did.subdet() == HcalForward)
 			{
-				if (xUni.get(eid)>0)
+				if (xUni.get(did)>0)
 					vflags[fUniSlotHF]._state = flag::fBAD;
 				else
 					vflags[fUniSlotHF]._state = flag::fGOOD;
@@ -171,7 +169,7 @@ namespace hcaldqm
 			for (std::vector<flag::Flag>::iterator ft=vflags.begin();
 				ft!=vflags.end(); ++ft)
 			{
-				cSummary.setBinContent(eid, iflag, ft->_state);
+				cSummary.setBinContent(did, iflag, ft->_state);
 				fSum+=(*ft);
 				iflag++;
 				ft->reset();

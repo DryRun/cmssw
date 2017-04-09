@@ -52,8 +52,7 @@ namespace hcaldqm
 			if (!it->isHcalDetId())
 				continue;
 			HcalDetId did(it->rawId());
-			HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
-			_xNChsNominal.get(eid)++;
+			_xNChsNominal.get(did)++;
 		}
 	}
 
@@ -117,17 +116,16 @@ namespace hcaldqm
 				continue;
 
 			HcalDetId did = HcalDetId(it->rawId());
-			HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
 
-			cOccupancy_depth.getBinContent(did)>0?_xNChs.get(eid)++:
-				_xNChs.get(eid)+=0;
+			cOccupancy_depth.getBinContent(did)>0?_xNChs.get(did)++:
+				_xNChs.get(did)+=0;
 			_cOccupancy_depth.fill(did, cOccupancy_depth.getBinContent(did));
 			//	digi size
 			cDigiSize_Subdet.getMean(did)!=
 				constants::DIGISIZE[did.subdet()-1]?
-				_xDigiSize.get(eid)++:_xDigiSize.get(eid)+=0;
+				_xDigiSize.get(did)++:_xDigiSize.get(did)+=0;
 			cDigiSize_Subdet.getRMS(did)!=0?
-				_xDigiSize.get(eid)++:_xDigiSize.get(eid)+=0;
+				_xDigiSize.get(did)++:_xDigiSize.get(did)+=0;
 		}
 
 		//	GENERATE SUMMARY AND STORE IT
@@ -137,21 +135,20 @@ namespace hcaldqm
 		vtmpflags[fNChsHF]=flag::Flag("NChsHF");
 		vtmpflags[fUnknownIds]=flag::Flag("UnknownIds");
 		for (auto& it_subdet : _vhashSubdets) {
-			HcalElectronicsId eid(it_subdet);
-
+			HcalDetId did = HcalDetId(it_subdet, 1, 1, 1)
 			//	reset all the tmp flags to fNA
 			//	MUST DO IT NOW! AS NCDAQ MIGHT OVERWRITE IT!
 			for (std::vector<flag::Flag>::iterator ft=vtmpflags.begin();
 				ft!=vtmpflags.end(); ++ft)
 				ft->reset();
 
-			if (_xDigiSize.get(eid)>0)
+			if (_xDigiSize.get(did)>0)
 				vtmpflags[fDigiSize]._state = flag::fBAD;
 			else
 				vtmpflags[fDigiSize]._state = flag::fGOOD;
-			if (utilities::isFEDHF(eid))
+			if (utilities::isFEDHF(did))
 			{
-				if (_xNChs.get(eid)!=_xNChsNominal.get(eid))
+				if (_xNChs.get(did)!=_xNChsNominal.get(did))
 					vtmpflags[fNChsHF]._state = flag::fBAD;
 				else
 					vtmpflags[fNChsHF]._state = flag::fGOOD;
@@ -240,23 +237,22 @@ namespace hcaldqm
 				continue;
 
 			HcalDetId did = HcalDetId(it->rawId());
-			HcalElectronicsId eid = HcalElectronicsId(_ehashmap.lookup(did));
 
 			if (_cOccupancy_depth.getBinContent(did)<1)
 			{
-				_xDead.get(eid)++;
+				_xDead.get(did)++;
 				cDead_depth.fill(did);
-				cDead_Subdet.fill(eid);
+				cDead_Subdet.fill(did);
 			}
 			if (did.subdet()==HcalForward)
-				_xUniHF.get(eid)+=cOccupancyCut_depth.getBinContent(did);
+				_xUniHF.get(did)+=cOccupancyCut_depth.getBinContent(did);
 		}
 		//	ANALYZE FOR HF SLOT UNIFORMITY
 		for (uintCompactMap::const_iterator it=_xUniHF.begin();
 			it!=_xUniHF.end(); ++it)
 		{
 			uint32_t hash1 = it->first;
-			HcalElectronicsId eid1(hash1);
+			HcalDetId did1(hash1);
 			double x1 = it->second;
 
 			for (uintCompactMap::const_iterator jt=_xUniHF.begin();
@@ -269,7 +265,7 @@ namespace hcaldqm
 				if (x2==0)
 					continue;
 				if (x1/x2<_thresh_unihf)
-					_xUni.get(eid1)++;
+					_xUni.get(did1)++;
 			}
 		}
 
@@ -287,7 +283,7 @@ namespace hcaldqm
 			flag::Flag fSumRun("DIGI"); // summary flag for this FED
 			flag::Flag ffDead("Dead");
 			flag::Flag ffUniSlotHF("UniSlotHF");
-			HcalElectronicsId eid(it_subdet);
+			HcalDetId did(it_subdet, 1, 1, 1);
 
 			//	ITERATE OVER EACH LS
 			for (std::vector<LSSummary>::const_iterator itls=_vflagsLS.begin();
@@ -299,23 +295,23 @@ namespace hcaldqm
 					itls->_vflags[isubdet].begin(); ft!=itls->_vflags[isubdet].end();
 					++ft)
 				{
-					cSummaryvsLS_Subdet.setBinContent(eid, itls->_LS, int(iflag),
+					cSummaryvsLS_Subdet.setBinContent(did, itls->_LS, int(iflag),
 						ft->_state);
 					fSumLS+=(*ft);
 					iflag++;
 				}
-				cSummaryvsLS.setBinContent(eid, itls->_LS, fSumLS._state);
+				cSummaryvsLS.setBinContent(did, itls->_LS, fSumLS._state);
 				fSumRun+=fSumLS;
 			}
 
 			//	EVALUATE RUN BASED FLAGS
-			if (_xDead.get(eid)>0)
+			if (_xDead.get(did)>0)
 				ffDead._state = flag::fBAD;
 			else
 				ffDead._state = flag::fGOOD;
-			if (utilities::isFEDHF(eid))
+			if (it_subdet == HcalForward)
 			{
-				if (_xUni.get(eid)>0)
+				if (_xUni.get(did)>0)
 					ffUniSlotHF._state = flag::fBAD;
 				else
 					ffUniSlotHF._state = flag::fGOOD;

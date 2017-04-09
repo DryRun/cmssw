@@ -112,15 +112,14 @@ namespace hcaldqm
 			//	both had emul and data tps
 			if (cEtCorrRatio_depthlike.getBinEntries(tid)>0)
 			{
-				HcalElectronicsId eid=HcalElectronicsId(ehashmap.lookup(*it));
 
 				double numetmsm = cEtMsm_depthlike.getBinContent(tid);
 				double numfgmsm = cFGMsm_depthlike.getBinContent(tid);
 				double numcorr = cEtCorrRatio_depthlike.getBinEntries(tid);
 
-				xEtMsm.get(eid) += numetmsm;
-				xFGMsm.get(eid) += numfgmsm;
-				xNumCorr.get(eid) += numcorr;
+				xEtMsm.get(tid) += numetmsm;
+				xFGMsm.get(tid) += numfgmsm;
+				xNumCorr.get(tid) += numcorr;
 
 				_cEtMsmFraction_depthlike.setBinContent(tid, 
 					numetmsm/numcorr);
@@ -134,12 +133,12 @@ namespace hcaldqm
 			it!=_vhashSubdets.end(); ++it)
 		{
 			flag::Flag fSum("TP");
-			HcalElectronicsId eid(*it);
+			HcalDetId did(*it);
 
-			double etmsmfr = xNumCorr.get(eid)>0?
-				double(xEtMsm.get(eid))/double(xNumCorr.get(eid)):0;
-			double fgmsmfr = xNumCorr.get(eid)>0?
-				double(xFGMsm.get(eid))/double(xNumCorr.get(eid)):0;
+			double etmsmfr = xNumCorr.get(did)>0?
+				double(xEtMsm.get(did))/double(xNumCorr.get(did)):0;
+			double fgmsmfr = xNumCorr.get(did)>0?
+				double(xFGMsm.get(did))/double(xNumCorr.get(did)):0;
 
 			if (etmsmfr>=_thresh_EtMsmRate_high)
 				vflags[fEtMsm]._state = flag::fBAD;
@@ -159,7 +158,7 @@ namespace hcaldqm
 			for (std::vector<flag::Flag>::iterator ft=vflags.begin();
 				ft!=vflags.end(); ++ft)
 			{
-				cSummary.setBinContent(eid, iflag, ft->_state);
+				cSummary.setBinContent(did, iflag, ft->_state);
 				fSum+=(*ft);
 				iflag++;
 				ft->reset();
