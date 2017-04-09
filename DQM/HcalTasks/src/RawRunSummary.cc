@@ -17,35 +17,17 @@ namespace hcaldqm
 
 		//	INITIALIZE WHAT NEEDS TO BE INITIALIZE ONLY ONCE!
 		_ehashmap.initialize(_emap, electronicsmap::fD2EHashMap);
-		_vhashVME.push_back(HcalElectronicsId(constants::FIBERCH_MIN,
-			constants::FIBER_VME_MIN, SPIGOT_MIN, CRATE_VME_MIN).rawId());
-		_vhashuTCA.push_back(HcalElectronicsId(CRATE_uTCA_MIN, SLOT_uTCA_MIN,
-			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
-		_filter_VME.initialize(filter::fFilter, hashfunctions::fElectronics,
-			_vhashVME);	// filter out VME 
-		_filter_uTCA.initialize(filter::fFilter, hashfunctions::fElectronics,
-			_vhashuTCA); // filter out uTCA
 
 		//	INTIALIZE CONTAINERS ACTING AS HOLDERS OF RUN INFORAMTION
-		_cEvnMsm_ElectronicsVME.initialize(_name, "EvnMsm",
+		_cEvnMsm_Electronics.initialize(_name, "EvnMsm",
 			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsVME),
-			new quantity::ElectronicsQuantity(quantity::fSpigot),
+			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
-		_cBcnMsm_ElectronicsVME.initialize(_name, "BcnMsm",
+		_cBcnMsm_Electronics.initialize(_name, "BcnMsm",
 			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsVME),
-			new quantity::ElectronicsQuantity(quantity::fSpigot),
-			new quantity::ValueQuantity(quantity::fN),0);
-		_cEvnMsm_ElectronicsuTCA.initialize(_name, "EvnMsm",
-			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsuTCA),
-			new quantity::ElectronicsQuantity(quantity::fSlotuTCA),
-			new quantity::ValueQuantity(quantity::fN),0);
-		_cBcnMsm_ElectronicsuTCA.initialize(_name, "BcnMsm",
-			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsuTCA),
-			new quantity::ElectronicsQuantity(quantity::fSlotuTCA),
+			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		_cBadQuality_depth.initialize(_name, "BadQuality",
 			 hashfunctions::fdepth,
@@ -53,9 +35,9 @@ namespace hcaldqm
 			 new quantity::DetectorQuantity(quantity::fiphi),
 			 new quantity::ValueQuantity(quantity::fN),0);
 
-		_xEvn.initialize(hashfunctions::fFED);
-		_xBcn.initialize(hashfunctions::fFED);
-		_xBadQ.initialize(hashfunctions::fFED);
+		_xEvn.initialize(hashfunctions::fSubdet);
+		_xBcn.initialize(hashfunctions::fSubdet);
+		_xBadQ.initialize(hashfunctions::fSubdet);
 		//	BOOK CONTAINERSXXX
 		_xEvn.book(_emap); _xBcn.book(_emap); _xBadQ.book(_emap);
 	}
@@ -85,28 +67,18 @@ namespace hcaldqm
 		_xEvn.reset(); _xBcn.reset(); _xBadQ.reset();
 		
 		//	INITIALIZE LUMI BASED HISTOGRAMS
-		Container2D cEvnMsm_ElectronicsVME,cEvnMsm_ElectronicsuTCA;
-		Container2D cBcnMsm_ElectronicsVME,cBcnMsm_ElectronicsuTCA;
+		Container2D cEvnMsm_Electronics;
+		Container2D cBcnMsm_Electronics;
 		Container2D cBadQuality_depth;
-		cEvnMsm_ElectronicsVME.initialize(_taskname, "EvnMsm",
+		cEvnMsm_Electronics.initialize(_taskname, "EvnMsm",
 			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsVME),
-			new quantity::ElectronicsQuantity(quantity::fSpigot),
+			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
-		cBcnMsm_ElectronicsVME.initialize(_taskname, "BcnMsm",
+		cBcnMsm_Electronics.initialize(_taskname, "BcnMsm",
 			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsVME),
-			new quantity::ElectronicsQuantity(quantity::fSpigot),
-			new quantity::ValueQuantity(quantity::fN),0);
-		cEvnMsm_ElectronicsuTCA.initialize(_taskname, "EvnMsm",
-			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsuTCA),
-			new quantity::ElectronicsQuantity(quantity::fSlotuTCA),
-			new quantity::ValueQuantity(quantity::fN),0);
-		cBcnMsm_ElectronicsuTCA.initialize(_taskname, "BcnMsm",
-			hashfunctions::fElectronics,
-			new quantity::FEDQuantity(_vFEDsuTCA),
-			new quantity::ElectronicsQuantity(quantity::fSlotuTCA),
+			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		cBadQuality_depth.initialize(_taskname, "BadQuality",
 			 hashfunctions::fdepth,
@@ -115,10 +87,8 @@ namespace hcaldqm
 			 new quantity::ValueQuantity(quantity::fN),0);
 
 		//	LOAD LUMI BASED HISTOGRAMS
-		cEvnMsm_ElectronicsVME.load(ig, _emap, _filter_uTCA, _subsystem);
-		cBcnMsm_ElectronicsVME.load(ig, _emap, _filter_uTCA, _subsystem);
-		cEvnMsm_ElectronicsuTCA.load(ig, _emap, _filter_VME, _subsystem);
-		cBcnMsm_ElectronicsuTCA.load(ig, _emap, _filter_VME, _subsystem);
+		cEvnMsm_Electronics.load(ig, _emap, _subsystem);
+		cBcnMsm_Electronics.load(ig, _emap, _subsystem);
 		cBadQuality_depth.load(ig, _emap, _subsystem);
 		MonitorElement *meNumEvents = ig.get(_subsystem+
 			"/RunInfo/NumberOfEvents");
@@ -127,10 +97,8 @@ namespace hcaldqm
 		//	BOOK for the very first time
 		if (!_booked)
 		{
-			_cEvnMsm_ElectronicsVME.book(ib, _emap, _filter_uTCA, _subsystem);
-			_cBcnMsm_ElectronicsVME.book(ib, _emap, _filter_uTCA, _subsystem);
-			_cEvnMsm_ElectronicsuTCA.book(ib, _emap, _filter_VME, _subsystem);
-			_cBcnMsm_ElectronicsuTCA.book(ib, _emap, _filter_VME, _subsystem);
+			_cEvnMsm_Electronics.book(ib, _emap, _subsystem);
+			_cBcnMsm_Electronics.book(ib, _emap, _subsystem);
 			_cBadQuality_depth.book(ib, _emap, _subsystem);
 			_booked=true;
 		}
@@ -148,26 +116,13 @@ namespace hcaldqm
 
 			_xBadQ.get(eid)+=cBadQuality_depth.getBinContent(did);
 			_cBadQuality_depth.fill(did, cBadQuality_depth.getBinContent(did));
-			if (eid.isVMEid())
-			{
-				_xEvn.get(eid)+=cEvnMsm_ElectronicsVME.getBinContent(eid);
-				_xBcn.get(eid)+=cBcnMsm_ElectronicsVME.getBinContent(eid);
+			_xEvn.get(eid)+=cEvnMsm_Electronics.getBinContent(eid);
+			_xBcn.get(eid)+=cBcnMsm_Electronics.getBinContent(eid);
 
-				_cEvnMsm_ElectronicsVME.fill(eid, 
-					cEvnMsm_ElectronicsVME.getBinContent(eid));
-				_cBcnMsm_ElectronicsVME.fill(eid, 
-					cBcnMsm_ElectronicsVME.getBinContent(eid));
-			}
-			else
-			{
-				_xEvn.get(eid)+=cEvnMsm_ElectronicsuTCA.getBinContent(eid);
-				_xBcn.get(eid)+=cBcnMsm_ElectronicsuTCA.getBinContent(eid);
-
-				_cEvnMsm_ElectronicsuTCA.fill(eid, 
-					cEvnMsm_ElectronicsuTCA.getBinContent(eid));
-				_cBcnMsm_ElectronicsuTCA.fill(eid, 
-					cBcnMsm_ElectronicsuTCA.getBinContent(eid));
-			}
+			_cEvnMsm_Electronics.fill(eid, 
+				cEvnMsm_Electronics.getBinContent(eid));
+			_cBcnMsm_Electronics.fill(eid, 
+				cBcnMsm_Electronics.getBinContent(eid));
 		}
 		
 
@@ -177,10 +132,8 @@ namespace hcaldqm
 		vtmpflags[fEvnMsm]=flag::Flag("EvnMsm");
 		vtmpflags[fBcnMsm]=flag::Flag("BcnMsm");
 		vtmpflags[fBadQ]=flag::Flag("BadQ");
-		for (std::vector<uint32_t>::const_iterator it=_vhashFEDs.begin();
-			it!=_vhashFEDs.end(); ++it)
-		{
-			HcalElectronicsId eid(*it);
+		for (auto& it_subdet : _vhashSubdets) {
+			HcalElectronicsId eid(it_subdet);
 			
 			//	reset all the tmp flags to fNA
 			//	MUST DO IT NOW! AS NCDAQ MIGHT OVERWRITE IT!
@@ -188,47 +141,27 @@ namespace hcaldqm
 				ft!=vtmpflags.end(); ++ft)
 				ft->reset();
 			
-			//	check if this FED was @cDAQ
-			std::vector<uint32_t>::const_iterator cit=std::find(
-				_vcdaqEids.begin(), _vcdaqEids.end(), *it);
-			if (cit==_vcdaqEids.end())
-			{
-				//	was not @cDAQ, set all the flags for this FED as fNCDAQ
-				for (std::vector<flag::Flag>::iterator ft=vtmpflags.begin();
-					ft!=vtmpflags.end(); ++ft)
-					ft->_state = flag::fNCDAQ;
+			if (_xEvn.get(eid)>0)
+				vtmpflags[fEvnMsm]._state = flag::fBAD;
+			else
+				vtmpflags[fEvnMsm]._state = flag::fGOOD;
+			if (_xBcn.get(eid)>0)
+				vtmpflags[fBcnMsm]._state = flag::fBAD;
+			else
+				vtmpflags[fBcnMsm]._state = flag::fGOOD;
 
-				// push all the flags for this FED
-				// IMPORTANT!!!
-				lssum._vflags.push_back(vtmpflags);
-				continue;
-			}
+			if (double(_xBadQ.get(eid))>double(12*numEvents))
+				vtmpflags[fBadQ]._state = flag::fBAD;
+			else if (_xBadQ.get(eid)>0)
+				vtmpflags[fBadQ]._state = flag::fPROBLEMATIC;
+			else
+				vtmpflags[fBadQ]._state = flag::fGOOD;
 
-			//	here only if was registered at cDAQ
-			if (utilities::isFEDHBHE(eid) || utilities::isFEDHF(eid) ||
-				utilities::isFEDHO(eid))
-			{
-				if (_xEvn.get(eid)>0)
-					vtmpflags[fEvnMsm]._state = flag::fBAD;
-				else
-					vtmpflags[fEvnMsm]._state = flag::fGOOD;
-				if (_xBcn.get(eid)>0)
-					vtmpflags[fBcnMsm]._state = flag::fBAD;
-				else
-					vtmpflags[fBcnMsm]._state = flag::fGOOD;
-				if (double(_xBadQ.get(eid))>double(12*numEvents))
-					vtmpflags[fBadQ]._state = flag::fBAD;
-				else if (_xBadQ.get(eid)>0)
-					vtmpflags[fBadQ]._state = flag::fPROBLEMATIC;
-				else
-					vtmpflags[fBadQ]._state = flag::fGOOD;
-			}
-
-			// push all the flags for this FED
+			// push all the flags for this subdet
 			lssum._vflags.push_back(vtmpflags);
 		}
 
-		//	push all flags for all FEDs for this LS
+		//	push all flags for all subdets for this LS
 		_vflagsLS.push_back(lssum);
 	}
 
@@ -254,34 +187,32 @@ namespace hcaldqm
 
 
 		//	INITIALIZE AND BOOK SUMMARY CONTAINERS
-		ContainerSingle2D cSummaryvsLS; // summary per FED: flag vs LS
-		Container2D cSummaryvsLS_FED; // LS based flags vs LS for each FED
+		ContainerSingle2D cSummaryvsLS; // summary per subdet: flag vs LS
+		Container2D cSummaryvsLS_Subdet; // LS based flags vs LS for each subdet
 		cSummaryvsLS.initialize(_name, "SummaryvsLS",
 			new quantity::LumiSection(_maxProcessedLS),
-			new quantity::FEDQuantity(_vFEDs),
+			new quantity::DetectorQuantity(quantity::fSubdet),
 			new quantity::ValueQuantity(quantity::fState),0);
-		cSummaryvsLS_FED.initialize(_name, "SummaryvsLS",
-			hashfunctions::fFED,
+		cSummaryvsLS_Subdet.initialize(_name, "SummaryvsLS",
+			hashfunctions::fSubdet,
 			new quantity::LumiSection(_maxProcessedLS),
 			new quantity::FlagQuantity(vflagsLS),
 			new quantity::ValueQuantity(quantity::fState),0);
-		cSummaryvsLS_FED.book(ib, _emap, _subsystem);
+		cSummaryvsLS_Subdet.book(ib, _emap, _subsystem);
 		cSummaryvsLS.book(ib, _subsystem);
 
 		/*
-		 *	Iterate over each FED
+		 *	Iterate over each subdet
 		 *		Iterate over each LS SUmmary
 		 *			Iterate over all flags
 		 *				set...
 		 */
 
-		std::vector<flag::Flag> sumflags; // flag per FED
-		int ifed=0;
-		for (std::vector<uint32_t>::const_iterator it=_vhashFEDs.begin();
-			it!=_vhashFEDs.end(); ++it)
-		{
-			flag::Flag fSumRun("RAW"); // summary flag for this FED
-			HcalElectronicsId eid(*it);
+		std::vector<flag::Flag> sumflags; // flag per subdet
+		int isubdet=0;
+		for (auto& it_subdet : _vhashSubdets) {
+			flag::Flag fSumRun("RAW"); // summary flag for this subdet
+			HcalElectronicsId eid(it_subdet);
 
 			//	ITERATE OVER EACH LS
 			for (std::vector<LSSummary>::const_iterator itls=_vflagsLS.begin();
@@ -291,25 +222,25 @@ namespace hcaldqm
 				int iflag=0;
 				flag::Flag fSumLS("RAW");
 				for (std::vector<flag::Flag>::const_iterator ft=
-					itls->_vflags[ifed].begin(); ft!=itls->_vflags[ifed].end();
+					itls->_vflags[isubdet].begin(); ft!=itls->_vflags[isubdet].end();
 					++ft)
 				{
-					//	Flag vs LS per FEd
-					cSummaryvsLS_FED.setBinContent(eid, itls->_LS, int(iflag),
+					//	Flag vs LS per subdet
+					cSummaryvsLS_Subdet.setBinContent(eid, itls->_LS, int(iflag),
 						ft->_state);
 					fSumLS+=(*ft);
 					iflag++;
 				}
-				//	FED vs LS
+				//	Subdet vs LS
 				cSummaryvsLS.setBinContent(eid, itls->_LS, fSumLS._state);
 				fSumRun+=fSumLS;
 			}
 			
-			//	push the summary flag for this FED for the whole RUN
+			//	push the summary flag for this Subdet for the whole RUN
 			sumflags.push_back(fSumRun);
 			
-			//	increment the fed counter
-			ifed++;
+			//	increment the subdet counter
+			isubdet++;
 		}
 	
 		return sumflags;

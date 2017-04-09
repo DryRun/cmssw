@@ -27,9 +27,8 @@ namespace hcaldqm
 
 			electronicsmap::ElectronicsMap _ehashmap;
 
-			std::vector<uint32_t> _vhashVME, _vhashuTCA, _vhashFEDHF;
-			std::vector<int> _vFEDsVME, _vFEDsuTCA;
-			filter::HashFilter _filter_VME, _filter_uTCA, _filter_FEDHF;
+			std::vector<uint32_t> _vhashHF;
+			filter::HashFilter _filter_HF;
 
 			Container2D _cOccupancy_depth;
 			bool _booked;
