@@ -573,7 +573,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			_cTimingCut_SubdetPM.fill(did, timing);
 			_cTimingCut_depth.fill(did, timing);
 			_cOccupancyCut_depth.fill(did);
-			_cTimingCutvsLS_SubdetPM.fill(did, _currentLS, timing);
+			_cTimingCutvsLS_SubdetPM.fill(did, _currentLS, timing)
 			if (_ptype != fOffline) { // hidefed2crate
 				_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
 			}
@@ -808,6 +808,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			_cOccupancyCut_depth.fill(did);
 			_cTimingCut_SubdetPM.fill(did, timing);
 			_cTimingCut_depth.fill(did, timing);
+			_cTimingCutvsLS_SubdetPM.fill(did, _currentLS, timing)
 			if (_ptype != fOffline) { // hidefed2crate
 				_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
 			}
@@ -958,6 +959,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			}
 			_cTimingCut_SubdetPM.fill(did, timing);
 			_cTimingCut_depth.fill(did, timing);
+			_cTimingCutvsLS_SubdetPM.fill(did, _currentLS, timing)
 			if (_ptype != fOffline) { // hidefed2crate
 				_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
 			}
