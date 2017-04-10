@@ -60,8 +60,14 @@ namespace hcaldqm
 			for (std::vector<HcalElectronicsId>::const_iterator
 				it=vids.begin(); it!=vids.end(); ++it)
 			{
-				HcalDetId did = emap->lookup(*it);
-				HcalSubdetector subdet = did.subdet();
+				//HcalDetId did = emap->lookup(*it);
+				//HcalSubdetector subdet = did.subdet();
+				DetId did_det = emap->lookup(*it);
+				HcalSubdetector subdet = (HcalSubdetector)did_det.subdetId();
+				if (subdet != HcalBarrel && subdet != HcalEndcap && subdet != HcalOuter && subdet != HcalForward && subdet != HcalTriggerTower && subdet != HcalOther) {
+					//std::cerr << "[Utilities::getSubdetList] WARNING : Found HcalSubdetector " << subdet << ". I don't know what to do with this, so I'm omitting it." << std::endl;
+					continue;
+				}
 				if (subdet == HcalOther) {
 					continue;
 				}
