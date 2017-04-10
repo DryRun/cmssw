@@ -57,15 +57,25 @@ namespace hcaldqm
 			std::vector<HcalSubdetector> vSubdets;
 			std::vector<HcalElectronicsId> vids = 
 				emap->allElectronicsIdPrecision();
+			std::vector<int> unknown_subdetectors;
 			for (std::vector<HcalElectronicsId>::const_iterator
 				it=vids.begin(); it!=vids.end(); ++it)
 			{
 				//HcalDetId did = emap->lookup(*it);
 				//HcalSubdetector subdet = did.subdet();
 				DetId did_det = emap->lookup(*it);
+				if (did_det.subdetId() >= 8) {
+					if (std::find(unknown_subdetectors.begin(), unknown_subdetectors.end(), did_det.subdetId()) == unknown_subdetectors.end()) {
+						unknown_subdetectors.push_back(did_det.subdetId());
+					}
+					continue;
+				}
 				HcalSubdetector subdet = (HcalSubdetector)did_det.subdetId();
 				if (subdet != HcalBarrel && subdet != HcalEndcap && subdet != HcalOuter && subdet != HcalForward && subdet != HcalTriggerTower && subdet != HcalOther) {
 					//std::cerr << "[Utilities::getSubdetList] WARNING : Found HcalSubdetector " << subdet << ". I don't know what to do with this, so I'm omitting it." << std::endl;
+					if (std::find(unknown_subdetectors.begin(), unknown_subdetectors.end(), did_det.subdetId()) == unknown_subdetectors.end()) {
+						unknown_subdetectors.push_back(did_det.subdetId());
+					}
 					continue;
 				}
 				if (subdet == HcalOther) {
@@ -74,6 +84,9 @@ namespace hcaldqm
 				if (std::find(vSubdets.begin(), vSubdets.end(), subdet) == vSubdets.end()) {
 					vSubdets.push_back(subdet);
 				}
+			}
+			for (auto& it_subdet : unknown_subdetectors) {
+				std::cerr << "[Utilities::getSubdetList] WARNING : Skipping unknown subdetector " << it_subdet << std::endl;
 			}
 			return vSubdets;
 		}

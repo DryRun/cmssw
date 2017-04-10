@@ -48,9 +48,9 @@ namespace hcaldqm
 		ContainerXXX<double> xNumCorr;
 		xDeadD.initialize(hashfunctions::fSubdet);
 		xDeadE.initialize(hashfunctions::fSubdet);
-		xEtMsm.initialize(hashfunctions::fSubdet);
-		xFGMsm.initialize(hashfunctions::fSubdet);
-		xNumCorr.initialize(hashfunctions::fSubdet);
+		xEtMsm.initialize(hashfunctions::fTTSubdet);
+		xFGMsm.initialize(hashfunctions::fTTSubdet);
+		xNumCorr.initialize(hashfunctions::fTTSubdet);
 		cOccupancyData_depthlike.initialize(_taskname, "OccupancyData",
 			new quantity::TrigTowerQuantity(quantity::fTTieta),
 			new quantity::TrigTowerQuantity(quantity::fTTiphi),
@@ -99,6 +99,8 @@ namespace hcaldqm
 		cSummary.book(ib, _subsystem);
 
 		//	iterate
+		std::map<HcalSubdetector, HcalTrigTowerDetId> subdet_tids; // list of one TrigTowerDetId per subdetector, for making the subdet loop 
+
 		std::vector<HcalTrigTowerDetId> tids = _emap->allTriggerId();
 		for (std::vector<HcalTrigTowerDetId>::const_iterator it=tids.begin();
 			it!=tids.end(); ++it)
@@ -126,19 +128,24 @@ namespace hcaldqm
 				_cFGMsmFraction_depthlike.setBinContent(tid, 
 					numfgmsm/numcorr);
 			}
+			HcalSubdetector subdet = tid.subdet();
+			if (subdet_tids.find(subdet) == subdet_tids.end()) {
+				subdet_tids[subdet] = tid;
+			}
 		}
 
 		std::vector<flag::Flag> sumflags;
-		for (std::vector<uint32_t>::const_iterator it=_vhashSubdets.begin();
-			it!=_vhashSubdets.end(); ++it)
+		//for (std::vector<uint32_t>::const_iterator it=_vhashSubdets.begin();
+		//	it!=_vhashSubdets.end(); ++it)
+		for (auto& it_subdet_tid : subdet_tids)
 		{
 			flag::Flag fSum("TP");
-			HcalDetId did(*it);
+			HcalTrigTowerDetId tid(it_subdet_tid.second);
 
-			double etmsmfr = xNumCorr.get(did)>0?
-				double(xEtMsm.get(did))/double(xNumCorr.get(did)):0;
-			double fgmsmfr = xNumCorr.get(did)>0?
-				double(xFGMsm.get(did))/double(xNumCorr.get(did)):0;
+			double etmsmfr = xNumCorr.get(tid)>0?
+				double(xEtMsm.get(tid))/double(xNumCorr.get(tid)):0;
+			double fgmsmfr = xNumCorr.get(tid)>0?
+				double(xFGMsm.get(tid))/double(xNumCorr.get(tid)):0;
 
 			if (etmsmfr>=_thresh_EtMsmRate_high)
 				vflags[fEtMsm]._state = flag::fBAD;
@@ -158,7 +165,7 @@ namespace hcaldqm
 			for (std::vector<flag::Flag>::iterator ft=vflags.begin();
 				ft!=vflags.end(); ++ft)
 			{
-				cSummary.setBinContent(did, iflag, ft->_state);
+				cSummary.setBinContent(tid, iflag, ft->_state);
 				fSum+=(*ft);
 				iflag++;
 				ft->reset();
