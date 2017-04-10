@@ -80,7 +80,7 @@ namespace hcaldqm
 			new quantity::TrigTowerQuantity(quantity::fTTiphi),
 			new quantity::ValueQuantity(quantity::fRatio_0to2),0);
 		cSummary.initialize(_name, "Summary",
-			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::DetectorQuantity(quantity::fTTSubdet),
 			new quantity::FlagQuantity(vflags),
 			new quantity::ValueQuantity(quantity::fState),0);
 
