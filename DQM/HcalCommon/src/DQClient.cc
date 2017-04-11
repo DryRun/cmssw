@@ -81,13 +81,13 @@ namespace hcaldqm
 				}
 			}
 		} else {
-			// For offline, use subdetectors instead of FEDs
-			_vSubdets = utilities::getSubdetList(_emap);
-			for (auto& it_subdet : _vSubdets) {
-				_vhashSubdets.push_back(HcalDetId(it_subdet, 1, 1, 1).rawId());
+			// For offline, use crates instead of FEDs
+			_vCrates = utilities::getCrateList(_emap);
+			for (auto& it_crate : _vCrates) {
+				_vhashCrates.push_back(HcalElectronicsId(it_crate, SLOT_uTCA_MIN, FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
 			}
 		}
-
+		
 		//	get the Channel Quality masks
 		_xQuality.initialize(hashfunctions::fDChannel);
 		edm::ESHandle<HcalChannelQuality> hcq;

@@ -46,11 +46,11 @@ namespace hcaldqm
 		ContainerSingle2D cSummary;
 		ContainerXXX<double> xDeadD, xDeadE, xEtMsm, xFGMsm;
 		ContainerXXX<double> xNumCorr;
-		xDeadD.initialize(hashfunctions::fSubdet);
-		xDeadE.initialize(hashfunctions::fSubdet);
-		xEtMsm.initialize(hashfunctions::fTTSubdet);
-		xFGMsm.initialize(hashfunctions::fTTSubdet);
-		xNumCorr.initialize(hashfunctions::fTTSubdet);
+		xDeadD.initialize(hashfunctions::fCrate);
+		xDeadE.initialize(hashfunctions::fCrate);
+		xEtMsm.initialize(hashfunctions::fCrate);
+		xFGMsm.initialize(hashfunctions::fCrate);
+		xNumCorr.initialize(hashfunctions::fCrate);
 		cOccupancyData_depthlike.initialize(_taskname, "OccupancyData",
 			new quantity::TrigTowerQuantity(quantity::fTTieta),
 			new quantity::TrigTowerQuantity(quantity::fTTiphi),
@@ -80,7 +80,7 @@ namespace hcaldqm
 			new quantity::TrigTowerQuantity(quantity::fTTiphi),
 			new quantity::ValueQuantity(quantity::fRatio_0to2),0);
 		cSummary.initialize(_name, "Summary",
-			new quantity::TrigTowerQuantity(quantity::fTTSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::FlagQuantity(vflags),
 			new quantity::ValueQuantity(quantity::fState),0);
 
@@ -99,8 +99,6 @@ namespace hcaldqm
 		cSummary.book(ib, _subsystem);
 
 		//	iterate
-		std::map<HcalSubdetector, HcalTrigTowerDetId> subdet_tids; // list of one TrigTowerDetId per subdetector, for making the subdet loop 
-
 		std::vector<HcalTrigTowerDetId> tids = _emap->allTriggerId();
 		for (std::vector<HcalTrigTowerDetId>::const_iterator it=tids.begin();
 			it!=tids.end(); ++it)
@@ -128,44 +126,45 @@ namespace hcaldqm
 				_cFGMsmFraction_depthlike.setBinContent(tid, 
 					numfgmsm/numcorr);
 			}
-			HcalSubdetector subdet = tid.subdet();
-			if (subdet_tids.find(subdet) == subdet_tids.end()) {
-				subdet_tids[subdet] = tid;
-			}
 		}
 
 		std::vector<flag::Flag> sumflags;
-		//for (std::vector<uint32_t>::const_iterator it=_vhashSubdets.begin();
-		//	it!=_vhashSubdets.end(); ++it)
-		for (auto& it_subdet_tid : subdet_tids)
+		for (auto& it_hashcrate : _vhashCrates)
 		{
 			flag::Flag fSum("TP");
-			HcalTrigTowerDetId tid(it_subdet_tid.second);
+			HcalElectronicsId eid(it_hashcrate);
+			HcalDetId did = HcalDetId(_emap->lookup(eid));
 
-			double etmsmfr = xNumCorr.get(tid)>0?
-				double(xEtMsm.get(tid))/double(xNumCorr.get(tid)):0;
-			double fgmsmfr = xNumCorr.get(tid)>0?
-				double(xFGMsm.get(tid))/double(xNumCorr.get(tid)):0;
+			if (did.subdet() == HcalBarrel || did.subdet() == HcalEndcap || did.subdet() == HcalForward) {
+				double etmsmfr = xNumCorr.get(eid)>0?
+					double(xEtMsm.get(eid))/double(xNumCorr.get(eid)):0;
+				double fgmsmfr = xNumCorr.get(eid)>0?
+					double(xFGMsm.get(eid))/double(xNumCorr.get(eid)):0;
 
-			if (etmsmfr>=_thresh_EtMsmRate_high)
-				vflags[fEtMsm]._state = flag::fBAD;
-			else if (etmsmfr>=_thresh_EtMsmRate_low)
-				vflags[fEtMsm]._state = flag::fPROBLEMATIC;
-			else
-				vflags[fEtMsm]._state = flag::fGOOD;
-			if (fgmsmfr>=_thresh_FGMsmRate_high)
-				vflags[fFGMsm]._state = flag::fBAD;
-			else if (fgmsmfr>=_thresh_FGMsmRate_low)
-				vflags[fFGMsm]._state = flag::fPROBLEMATIC;
-			else
-				vflags[fFGMsm]._state = flag::fGOOD;
+				if (etmsmfr>=_thresh_EtMsmRate_high)
+					vflags[fEtMsm]._state = flag::fBAD;
+				else if (etmsmfr>=_thresh_EtMsmRate_low)
+					vflags[fEtMsm]._state = flag::fPROBLEMATIC;
+				else
+					vflags[fEtMsm]._state = flag::fGOOD;
+				if (fgmsmfr>=_thresh_FGMsmRate_high)
+					vflags[fFGMsm]._state = flag::fBAD;
+				else if (fgmsmfr>=_thresh_FGMsmRate_low)
+					vflags[fFGMsm]._state = flag::fPROBLEMATIC;
+				else
+					vflags[fFGMsm]._state = flag::fGOOD;
+			} else {
+				//	not @cDAQ
+				sumflags.push_back(flag::Flag("TP", flag::fNCDAQ));
+				continue;
+			}
 
 			//	combine
 			int iflag=0;
 			for (std::vector<flag::Flag>::iterator ft=vflags.begin();
 				ft!=vflags.end(); ++ft)
 			{
-				cSummary.setBinContent(tid, iflag, ft->_state);
+				cSummary.setBinContent(eid, iflag, ft->_state);
 				fSum+=(*ft);
 				iflag++;
 				ft->reset();

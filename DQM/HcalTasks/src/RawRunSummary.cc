@@ -21,12 +21,12 @@ namespace hcaldqm
 		//	INTIALIZE CONTAINERS ACTING AS HOLDERS OF RUN INFORAMTION
 		_cEvnMsm_Electronics.initialize(_name, "EvnMsm",
 			hashfunctions::fElectronics,
-			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		_cBcnMsm_Electronics.initialize(_name, "BcnMsm",
 			hashfunctions::fElectronics,
-			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		_cBadQuality_depth.initialize(_name, "BadQuality",
@@ -35,9 +35,9 @@ namespace hcaldqm
 			 new quantity::DetectorQuantity(quantity::fiphi),
 			 new quantity::ValueQuantity(quantity::fN),0);
 
-		_xEvn.initialize(hashfunctions::fSubdet);
-		_xBcn.initialize(hashfunctions::fSubdet);
-		_xBadQ.initialize(hashfunctions::fSubdet);
+		_xEvn.initialize(hashfunctions::fCrate);
+		_xBcn.initialize(hashfunctions::fCrate);
+		_xBadQ.initialize(hashfunctions::fCrate);
 		//	BOOK CONTAINERSXXX
 		_xEvn.book(_emap); _xBcn.book(_emap); _xBadQ.book(_emap);
 	}
@@ -72,12 +72,12 @@ namespace hcaldqm
 		Container2D cBadQuality_depth;
 		cEvnMsm_Electronics.initialize(_taskname, "EvnMsm",
 			hashfunctions::fElectronics,
-			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		cBcnMsm_Electronics.initialize(_taskname, "BcnMsm",
 			hashfunctions::fElectronics,
-			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fN),0);
 		cBadQuality_depth.initialize(_taskname, "BadQuality",
@@ -132,8 +132,8 @@ namespace hcaldqm
 		vtmpflags[fEvnMsm]=flag::Flag("EvnMsm");
 		vtmpflags[fBcnMsm]=flag::Flag("BcnMsm");
 		vtmpflags[fBadQ]=flag::Flag("BadQ");
-		for (auto& it_subdet : _vhashSubdets) {
-			HcalElectronicsId eid(it_subdet);
+		for (auto& it_crate : _vhashCrates) {
+			HcalElectronicsId eid(it_crate);
 			
 			//	reset all the tmp flags to fNA
 			//	MUST DO IT NOW! AS NCDAQ MIGHT OVERWRITE IT!
@@ -157,11 +157,11 @@ namespace hcaldqm
 			else
 				vtmpflags[fBadQ]._state = flag::fGOOD;
 
-			// push all the flags for this subdet
+			// push all the flags for this crate
 			lssum._vflags.push_back(vtmpflags);
 		}
 
-		//	push all flags for all subdets for this LS
+		//	push all flags for all crates for this LS
 		_vflagsLS.push_back(lssum);
 	}
 
@@ -187,32 +187,32 @@ namespace hcaldqm
 
 
 		//	INITIALIZE AND BOOK SUMMARY CONTAINERS
-		ContainerSingle2D cSummaryvsLS; // summary per subdet: flag vs LS
-		Container2D cSummaryvsLS_Subdet; // LS based flags vs LS for each subdet
+		ContainerSingle2D cSummaryvsLS; // summary per crate: flag vs LS
+		Container2D cSummaryvsLS_Crate; // LS based flags vs LS for each crate
 		cSummaryvsLS.initialize(_name, "SummaryvsLS",
 			new quantity::LumiSection(_maxProcessedLS),
-			new quantity::DetectorQuantity(quantity::fSubdet),
+			new quantity::ElectronicsQuantity(quantity::fCrate),
 			new quantity::ValueQuantity(quantity::fState),0);
-		cSummaryvsLS_Subdet.initialize(_name, "SummaryvsLS",
-			hashfunctions::fSubdet,
+		cSummaryvsLS_Crate.initialize(_name, "SummaryvsLS",
+			hashfunctions::fCrate,
 			new quantity::LumiSection(_maxProcessedLS),
 			new quantity::FlagQuantity(vflagsLS),
 			new quantity::ValueQuantity(quantity::fState),0);
-		cSummaryvsLS_Subdet.book(ib, _emap, _subsystem);
+		cSummaryvsLS_Crate.book(ib, _emap, _subsystem);
 		cSummaryvsLS.book(ib, _subsystem);
 
 		/*
-		 *	Iterate over each subdet
+		 *	Iterate over each crate
 		 *		Iterate over each LS SUmmary
 		 *			Iterate over all flags
 		 *				set...
 		 */
 
-		std::vector<flag::Flag> sumflags; // flag per subdet
-		int isubdet=0;
-		for (auto& it_subdet : _vhashSubdets) {
-			flag::Flag fSumRun("RAW"); // summary flag for this subdet
-			HcalElectronicsId eid(it_subdet);
+		std::vector<flag::Flag> sumflags; // flag per crate
+		int icrate=0;
+		for (auto& it_crate : _vhashCrates) {
+			flag::Flag fSumRun("RAW"); // summary flag for this crate
+			HcalElectronicsId eid(it_crate);
 
 			//	ITERATE OVER EACH LS
 			for (std::vector<LSSummary>::const_iterator itls=_vflagsLS.begin();
@@ -222,25 +222,25 @@ namespace hcaldqm
 				int iflag=0;
 				flag::Flag fSumLS("RAW");
 				for (std::vector<flag::Flag>::const_iterator ft=
-					itls->_vflags[isubdet].begin(); ft!=itls->_vflags[isubdet].end();
+					itls->_vflags[icrate].begin(); ft!=itls->_vflags[icrate].end();
 					++ft)
 				{
-					//	Flag vs LS per subdet
-					cSummaryvsLS_Subdet.setBinContent(eid, itls->_LS, int(iflag),
+					//	Flag vs LS per crate
+					cSummaryvsLS_Crate.setBinContent(eid, itls->_LS, int(iflag),
 						ft->_state);
 					fSumLS+=(*ft);
 					iflag++;
 				}
-				//	Subdet vs LS
+				//	Crate vs LS
 				cSummaryvsLS.setBinContent(eid, itls->_LS, fSumLS._state);
 				fSumRun+=fSumLS;
 			}
 			
-			//	push the summary flag for this Subdet for the whole RUN
+			//	push the summary flag for this Crate for the whole RUN
 			sumflags.push_back(fSumRun);
 			
-			//	increment the subdet counter
-			isubdet++;
+			//	increment the crate counter
+			icrate++;
 		}
 	
 		return sumflags;

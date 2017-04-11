@@ -107,14 +107,16 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 	{
 		ib.setCurrentFolder(_subsystem+"/EventInfo");
 		_reportSummaryMap = ib.book2D("reportSummaryMap", "reportSummaryMap",
-			_vSubdets.size(), 0, _vSubdets.size(), num,0,num);
+			_vCrates.size(), 0, _vCrates.size(), num,0,num);
 		//	x axis labels
 		
-		for (uint32_t i=0; i<_vSubdets.size(); i++)
+		for (uint32_t i=0; i<_vCrates.size(); i++)
 		{
-			_reportSummaryMap->setBinLabel(i+1, hcaldqm::constants::SUBDETENUM_NAME.at(_vSubdets[i]), 1);
+			char name[5];
+			sprintf(name, "%d", _vCrates[i]);
+			_reportSummaryMap->setBinLabel(i+1, name, 1);
 		}
-		//	y axis lables
+		//	y axis labels
 		for (std::map<std::string, int>::const_iterator
 			it=datatiers.begin(); it!=datatiers.end(); ++it)
 		{
@@ -145,14 +147,13 @@ HcalOfflineHarvesting::HcalOfflineHarvesting(edm::ParameterSet const& ps) :
 			std::cout << "SUMMARY" << std::endl;
 		}
 		//for (uint32_t ifed=0; ifed<_vFEDs.size(); ifed++)
-		for (uint32_t isubdet=0; isubdet<_vSubdets.size(); isubdet++)
+		for (uint32_t icrate=0; icrate<_vCrates.size(); icrate++)
 		{
-			_reportSummaryMap->setBinContent(isubdet+1, 
-				datatiers[flags[isubdet]._name]+1, (int)flags[isubdet]._state);
+			_reportSummaryMap->setBinContent(icrate+1, datatiers[flags[icrate]._name]+1, (int)flags[icrate]._state);
 			if (_debug>0)
 			{
-				std::cout << "Subdet =" << hcaldqm::constants::SUBDETENUM_NAME.at(_vSubdets[isubdet]) << std::endl;
-				std::cout << flags[isubdet]._name << "  " << flags[isubdet]._state
+				std::cout << "Crate=" << _vCrates[icrate] << std::endl;
+				std::cout << flags[icrate]._name << "  " << flags[icrate]._state
 				<<std::endl;
 			}
 		}

@@ -39,10 +39,23 @@ namespace hcaldqm
 			return std::vector<flag::Flag>();
 
 		// FILTERS, some useful vectors, hash maps
+		// HF filter
 		std::vector<uint32_t> vhashHF;
-		vhashHF.push_back(HcalDetId(HcalForward, 1, 1, 1).rawId());
+		vhashHF.push_back(HcalElectronicsId(22, SLOT_uTCA_MIN,
+			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+		vhashHF.push_back(HcalElectronicsId(29, SLOT_uTCA_MIN,
+			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+		vhashHF.push_back(HcalElectronicsId(32, SLOT_uTCA_MIN,
+			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+		vhashHF.push_back(HcalElectronicsId(22, SLOT_uTCA_MIN+6,
+			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+		vhashHF.push_back(HcalElectronicsId(29, SLOT_uTCA_MIN+6,
+			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
+		vhashHF.push_back(HcalElectronicsId(32, SLOT_uTCA_MIN+6,
+			FIBER_uTCA_MIN1, FIBERCH_MIN, false).rawId());
 		filter::HashFilter filter_HF;
-		filter_HF.initialize(filter::fPreserver, hashfunctions::fSubdet, vhashHF);    // preserve only HF
+		filter_HF.initialize(filter::fPreserver, hashfunctions::fCrate,
+			vhashHF);    // preserve only HF crates
 
 		electronicsmap::ElectronicsMap ehashmap;
 		ehashmap.initialize(_emap, electronicsmap::fD2EHashMap);
@@ -57,8 +70,8 @@ namespace hcaldqm
 		ContainerSingle2D cSummary;
 		Container1D cTimingCut_HBHEPartition;
 		ContainerXXX<double> xUniHF, xUni;
-		xUni.initialize(hashfunctions::fSubdet);
-		xUniHF.initialize(hashfunctions::fSubdet);
+		xUni.initialize(hashfunctions::fCrate);
+		xUniHF.initialize(hashfunctions::fCrate);
 		cOccupancy_depth.initialize(_taskname, "Occupancy",
 			hashfunctions::fdepth,
 			new quantity::DetectorQuantity(quantity::fieta),
@@ -75,7 +88,7 @@ namespace hcaldqm
 			new quantity::ValueQuantity(quantity::fN),0);
 
 		cSummary.initialize(_name, "Summary",
-			new quantity::DetectorQuantity(hcaldqm::quantity::fSubdet),
+			new quantity::ElectronicsQuantity(hcaldqm::quantity::fCrate),
 			new quantity::FlagQuantity(vflags),
 			new quantity::ValueQuantity(quantity::fState),0);
 
@@ -98,9 +111,10 @@ namespace hcaldqm
 				continue;
 
 			HcalDetId did(it->rawId());
+			HcalElectronicsId eid = HcalElectronicsId(ehashmap.lookup(did));
 
 			if (did.subdet()==HcalForward)
-				xUniHF.get(did)+=cOccupancyCut_depth.getBinContent(did);
+				xUniHF.get(eid)+=cOccupancyCut_depth.getBinContent(did);
 		}
 
 
@@ -109,7 +123,7 @@ namespace hcaldqm
 			it!=xUniHF.end(); ++it)
 		{
 			uint32_t hash1 = it->first;
-			HcalDetId did1(hash1);
+			HcalElectronicsId eid1(hash1);
 			double x1 = it->second;
 			for (doubleCompactMap::const_iterator jt=xUniHF.begin();
 				jt!=xUniHF.end(); ++jt)
@@ -121,7 +135,7 @@ namespace hcaldqm
 				if (x2==0)
 					continue;
 				if (x1/x2<_thresh_unihf)
-					xUni.get(did1)++;
+					xUni.get(eid1)++;
 			}
 		}
 
@@ -142,22 +156,20 @@ namespace hcaldqm
 		//	summary flags
 		std::vector<flag::Flag> sumflags;
 		int ifed=0;
-		for (std::vector<uint32_t>::const_iterator it=_vhashSubdets.begin();
-			it!=_vhashSubdets.end(); ++it)
+		for (std::vector<uint32_t>::const_iterator it=_vhashCrates.begin();
+			it!=_vhashCrates.end(); ++it)
 		{
 			flag::Flag fSum("RECO");
-			HcalDetId did(*it);
+			HcalElectronicsId eid(*it);
+			HcalDetId did = HcalDetId(ehashmap.lookup(eid));
 
 			//	registered @cDAQ
-			if (did.subdet() == HcalBarrel || did.subdet() == HcalEndcap)
-			{
+			if (did.subdet() == HcalBarrel || did.subdet() == HcalEndcap) {
 				if (tcdsshift)
 					vflags[fTCDS]._state = flag::fBAD;
 				else
 					vflags[fTCDS]._state = flag::fGOOD;
-			}
-			if (did.subdet() == HcalForward)
-			{
+			} else if (did.subdet() == HcalForward) {
 				if (xUni.get(did)>0)
 					vflags[fUniSlotHF]._state = flag::fBAD;
 				else

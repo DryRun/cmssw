@@ -37,9 +37,9 @@ namespace hcaldqm
 			//	all FEDs
 			std::vector<int>		_vFEDs;
 			std::vector<uint32_t>	_vhashFEDs;
-			// Subdet and Subdet hash lists
-			std::vector<HcalSubdetector> _vSubdets;
-			std::vector<uint32_t> _vhashSubdets;
+			// Crate and Crate hash lists
+			std::vector<int> _vCrates;
+			std::vector<uint32_t> _vhashCrates;
 			//	container of quality masks from conddb
 			ContainerXXX<uint32_t> _xQuality;
 			//	vector of Electronics raw Ids of HCAL FEDs
