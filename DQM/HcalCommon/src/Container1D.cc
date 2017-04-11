@@ -76,17 +76,7 @@ namespace hcaldqm
 		BOOST_FOREACH(MEMap::value_type &pair, _mes)
 		{
 			std::cout << std::hex << pair.first << std::dec << std::endl;
-			std::cout << "\t" << pair.first << std::endl;
 		}
-	}
-
-	std::vector<uint32_t> Container1D::get_hashes() {
-		std::vector<uint32_t> vec;
-		BOOST_FOREACH(MEMap::value_type &pair, _mes)
-		{
-			vec.push_back(pair.first);
-		}
-		return vec;
 	}
 
 	/* virtual */ void Container1D::fill(uint32_t hash)
@@ -840,7 +830,6 @@ namespace hcaldqm
 					continue;
 
 				_logger.debug(_hashmap.getName(eid));
-				std::cout << "[Container1D::load] DEBUG : Loading element with eid = " << eid << " from " << path+"/"+_hashmap.getName(eid) << std::endl;
 				_mes.insert(
 					std::make_pair(hash, 
 						ig.get(path+"/"+_hashmap.getName(eid))));

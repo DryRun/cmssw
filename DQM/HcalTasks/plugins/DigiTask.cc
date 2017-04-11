@@ -108,10 +108,17 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
 
-	_cDigiSize_Crate.initialize(_name, "DigiSize",
-		hcaldqm::hashfunctions::fCrate,
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fDigiSize),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+	if (_ptype != fOffline) { // hidefed2crate
+		_cDigiSize_FED.initialize(_name, "DigiSize",
+			hcaldqm::hashfunctions::fFED,
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fDigiSize),
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+	} else {
+		_cDigiSize_Crate.initialize(_name, "DigiSize",
+			hcaldqm::hashfunctions::fCrate,
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fDigiSize),
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+	}
 
 	_cLETDCvsADC.initialize(_name, "LETDCvsADC",
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fQIE10ADC_256),
@@ -299,11 +306,6 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			new hcaldqm::quantity::ElectronicsQuantity(hcaldqm::quantity::fSlotuTCA),
 			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
 	
-		_cDigiSize_FED.initialize(_name, "DigiSize",
-			hcaldqm::hashfunctions::fFED,
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fDigiSize),
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
-
 		if (_ptype == fOnline) {
 			_cSummaryvsLS_FED.initialize(_name, "SummaryvsLS",
 				hcaldqm::hashfunctions::fFED,
@@ -353,6 +355,8 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		_cOccupancyCut_ElectronicsVME.book(ib, _emap, _filter_uTCA, _subsystem);
 		_cOccupancyCut_ElectronicsuTCA.book(ib, _emap, _filter_VME, _subsystem);
 		_cDigiSize_FED.book(ib, _emap, _subsystem);
+	} else {
+		_cDigiSize_Crate.book(ib, _emap, _subsystem);
 	}
 
 	_cTimingCut_SubdetPM.book(ib, _emap, _subsystem);
@@ -363,7 +367,6 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	_cOccupancy_depth.book(ib, _emap, _subsystem);
 	_cOccupancyCut_depth.book(ib, _emap, _subsystem);
 
-	_cDigiSize_Crate.book(ib, _emap, _subsystem);
 
 	_cLETDCvsADC.book(ib, _subsystem);
 	_cLETDCvsTS.book(ib, _subsystem);
@@ -421,7 +424,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	}
 
 	//	MARK THESE HISTOGRAMS AS LUMI BASED FOR OFFLINE PROCESSING
-	if (_ptype==fOffline)
+	if (_ptype == fOffline)
 	{
 		_cDigiSize_Crate.setLumiFlag();
 		//_cDigiSize_FED.setLumiFlag();
@@ -534,7 +537,9 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			_cOccupancyvsiphi_SubdetPM.fill(did);
 			_cOccupancyvsieta_Subdet.fill(did);
 		}
-		_cDigiSize_Crate.fill(eid, it->size());
+		if (_ptype == fOffline) {
+			_cDigiSize_Crate.fill(eid, it->size());
+		}
 
 		if (_ptype != fOffline) { // hidefed2crate
 			_cDigiSize_FED.fill(eid, it->size());
@@ -654,7 +659,9 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			_cOccupancyvsiphi_SubdetPM.fill(did);
 			_cOccupancyvsieta_Subdet.fill(did);
 		}
-		_cDigiSize_Crate.fill(eid, digi.samples());
+		if (_ptype == fOffline) {
+			_cDigiSize_Crate.fill(eid, digi.samples());
+		}
 		if (_ptype != fOffline) { // hidefed2crate
 			_cDigiSize_FED.fill(eid, digi.samples());
 			if (eid.isVMEid())
@@ -767,7 +774,9 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			_cOccupancyvsiphi_SubdetPM.fill(did);
 			_cOccupancyvsieta_Subdet.fill(did);
 		}
-		_cDigiSize_Crate.fill(eid, it->size());
+		if (_ptype == fOffline) {
+			_cDigiSize_Crate.fill(eid, it->size());
+		}
 		if (_ptype != fOffline) { // hidefed2crate
 			_cDigiSize_FED.fill(eid, it->size());
 			if (eid.isVMEid())
@@ -900,7 +909,9 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 			_cOccupancyvsiphi_SubdetPM.fill(did);
 			_cOccupancyvsieta_Subdet.fill(did);
 		}
-		_cDigiSize_Crate.fill(eid, digi.samples());
+		if (_ptype == fOffline) {
+			_cDigiSize_Crate.fill(eid, digi.samples());
+		}
 		if (_ptype != fOffline) { // hidefed2crate
 			_cDigiSize_FED.fill(eid, digi.samples());
 			if (eid.isVMEid())

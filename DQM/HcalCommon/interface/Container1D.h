@@ -317,14 +317,21 @@ namespace hcaldqm
 			//	print all the elements
 			virtual void print();
 
-			// Get list of hashes
-			std::vector<uint32_t> get_hashes();
-
 			//	TO BE USED IN THE FUTURE!
 			virtual void extendAxisRange(int);
 
 			//	set lumi flags for all mes
 			virtual void setLumiFlag();
+
+			inline MonitorElement* getMonitorElement(HcalElectronicsId eid) {
+				uint32_t hash = _hashmap.getHash(eid);
+				if (_mes.find(hash) != _mes.end()) {
+					return _mes[hash];
+				} else {
+					std::cerr << "[Container1D::getMonitorElement] WARNING : Hash " << hash << " / eid " << eid << " is not in _mes" << std::endl;
+					return 0x0;
+				}
+			}
 
 		protected:
 			virtual void customize(MonitorElement*);
