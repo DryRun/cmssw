@@ -87,7 +87,8 @@ namespace hcaldqm
 		_xDigiSize.reset(); _xNChs.reset();
 		
 		//	INITIALIZE LUMI BASED HISTOGRAMS
-		Container2D cDigiSize_Crate, cOccupancy_depth;
+		Container1D cDigiSize_Crate;
+		Container2D cOccupancy_depth;
 		cDigiSize_Crate.initialize(_taskname, "DigiSize",
 			hashfunctions::fCrate,
 			new quantity::ValueQuantity(quantity::fDigiSize),
@@ -100,7 +101,15 @@ namespace hcaldqm
 
 		//	LOAD LUMI BASED HISTOGRAMS
 		cOccupancy_depth.load(ig, _emap, _subsystem);
+
+		// Hcal/DigiTask/DigiSize/Crate/Crate20
+		std::cout << "[debug] Loading cDigiSize_Crate" << std::endl;
+		std::cout << "[debug] _subsystem = " << _subsystem << std::endl;
 		cDigiSize_Crate.load(ig, _emap, _subsystem);
+		std::cout << "[debug] Printing list of hashes in cDigiSize_Crate (and crateId)" << std::endl;
+		for (auto& it_hash : cDigiSize_Crate.get_hashes()) {
+			std::cout << "[debug]\teid=" << it_hash << " / crate = " << HcalElectronicsId(it_hash).crateId() << std::endl;
+		}
 		MonitorElement *meNumEvents = ig.get(_subsystem+
 			"/RunInfo/NumberOfEvents");
 		int numEvents = meNumEvents->getBinContent(1);
@@ -135,6 +144,10 @@ namespace hcaldqm
 				_xNChs.get(did)+=0;
 			_cOccupancy_depth.fill(did, cOccupancy_depth.getBinContent(did));
 			//	digi size
+			std::cout << "[debug] eid = " << eid << std::endl;
+			std::cout << "[debug] eid.crateId() = " << eid.crateId() << std::endl;
+			std::cout << "[debug] cDigiSize_Crate.print() = " << std::endl;
+			cDigiSize_Crate.print();
 			cDigiSize_Crate.getMean(eid)!=
 				constants::DIGISIZE[did.subdet()-1]?
 				_xDigiSize.get(eid)++:_xDigiSize.get(eid)+=0;

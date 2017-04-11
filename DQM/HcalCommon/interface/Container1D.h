@@ -317,6 +317,9 @@ namespace hcaldqm
 			//	print all the elements
 			virtual void print();
 
+			// Get list of hashes
+			std::vector<uint32_t> get_hashes();
+
 			//	TO BE USED IN THE FUTURE!
 			virtual void extendAxisRange(int);
 
