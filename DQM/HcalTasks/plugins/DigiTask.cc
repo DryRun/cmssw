@@ -587,7 +587,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	{
 		const QIE11DataFrame digi = static_cast<const QIE11DataFrame>(*it);
 
-		double sumQ = hcaldqm::utilities::sumQ_v10<QIE11DataFrame>(digi, 2.5, 0, digi.size()-1);
+		double sumQ = hcaldqm::utilities::sumQ_v10<QIE11DataFrame>(digi, 2.5, 0, digi.samples()-1);
 
 		//	Explicit check on the DetIds present in the Collection
 		HcalDetId const& did = digi.detid();
@@ -613,13 +613,13 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		_cOccupancy_depth.fill(did);
 		if (_ptype==fOnline)
 		{
-			_cDigiSizevsLS_FED.fill(eid, _currentLS, (int)digi.size());
-			(int)(digi.size())!=constants::DIGISIZE[did.subdet()-1]?
+			_cDigiSizevsLS_FED.fill(eid, _currentLS, (int)digi.samples());
+			(int)(digi.samples())!=constants::DIGISIZE[did.subdet()-1]?
 				_xDigiSize.get(eid)++:_xDigiSize.get(eid)+=0;
 			_cOccupancyvsiphi_SubdetPM.fill(did);
 			_cOccupancyvsieta_Subdet.fill(did);
 		}
-		_cDigiSize_FED.fill(eid, (int)(digi.size()));
+		_cDigiSize_FED.fill(eid, (int)(digi.samples()));
 		if (eid.isVMEid())
 		{
 			_cOccupancy_FEDVME.fill(eid);
@@ -640,7 +640,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		if (sumQ>_cutSumQ_HEP17)
 		{
 			double timing = hcaldqm::utilities::aveTS_v10<QIE11DataFrame>(digi, 2.5, 0,
-				digi.size()-1);
+				digi.samples()-1);
 			_cOccupancyCut_depth.fill(did);
 			_cTimingCut_depth.fill(did, timing);
 			_cSumQ_depth.fill(did, sumQ);
