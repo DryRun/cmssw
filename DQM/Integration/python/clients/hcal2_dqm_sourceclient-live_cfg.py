@@ -136,7 +136,6 @@ oldsubsystem = subsystem
 process.recHitTask.tagHBHE = cms.untracked.InputTag("hbheplan1")
 process.recHitTask.tagHO = cms.untracked.InputTag("horeco")
 process.recHitTask.tagHF = cms.untracked.InputTag("hfreco")
-process.recHitTask.tagpreHF = cms.untracked.InputTag("hfprereco")
 process.recHitTask.runkeyVal = runType
 process.recHitTask.runkeyName = runTypeName
 process.recHitTask.tagRaw = rawTagUntracked
