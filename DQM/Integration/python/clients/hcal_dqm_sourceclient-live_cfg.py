@@ -79,9 +79,12 @@ if isHeavyIon:
 	rawTag = cms.InputTag("rawDataRepacker")
 	rawTagUntracked = cms.untracked.InputTag("rawDataRepacker")
 
-process.emulTPDigis = process.simHcalTriggerPrimitiveDigis.clone()
-process.emulTPDigis.inputLabel = cms.VInputTag("hcalDigis", 'hcalDigis')
-process.emulTPDigis.FrontEndFormatError = cms.bool(True)
+process.emulTPDigis = \
+		process.simHcalTriggerPrimitiveDigis.clone()
+process.emulTPDigis.inputLabel = \
+		cms.VInputTag("hcalDigis", 'hcalDigis')
+process.emulTPDigis.FrontEndFormatError = \
+		cms.bool(True)
 process.HcalTPGCoderULUT.LUTGenerationMode = cms.bool(False)
 process.emulTPDigis.FG_threshold = cms.uint32(2)
 process.emulTPDigis.InputTagFEDRaw = rawTag
