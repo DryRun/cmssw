@@ -97,7 +97,7 @@ RecHitTask::RecHitTask(edm::ParameterSet const& ps):
 	_cOccupancyvsLS_Subdet.initialize(_name, "OccupancyvsLS",
 		hcaldqm::hashfunctions::fSubdet,
 		new hcaldqm::quantity::LumiSection(_maxLS),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN_to3000),0);
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN_to4000),0);
 
 	_cOccupancyCut_depth.initialize(_name, "OccupancyCut",
 		hcaldqm::hashfunctions::fdepth,
@@ -164,7 +164,7 @@ RecHitTask::RecHitTask(edm::ParameterSet const& ps):
 		_cOccupancyCutvsLS_Subdet.initialize(_name, "OccupancyCutvsLS",
 			hcaldqm::hashfunctions::fSubdet,
 			new hcaldqm::quantity::LumiSection(_maxLS),
-			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN_to3000),0);
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN_to4000),0);
 	}
 
 	// FED-based plots
@@ -489,12 +489,16 @@ RecHitTask::RecHitTask(edm::ParameterSet const& ps):
 
 			//	ONLINE 
 			if (_ptype==fOnline) {
-				_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
+				if (rawid != 0) {
+					_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
+				}
 				_cTimingCut_depth.fill(did, timing);
 				//	^^^ONLINE
 			} else {
 				if (_ptype != fOffline) { // hidefed2crate
-					_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
+					if (rawid != 0) {
+						_cTimingCutvsLS_FED.fill(eid, _currentLS, timing);
+					}
 				}
 				_cTimingCut_depth.fill(did, timing);
 			}
