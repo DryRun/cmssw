@@ -226,11 +226,11 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::LumiSection(500),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
-	_cPedestalMeanDB.initialize(_name, "PedestalMeanDB", hcaldqm::hashfunctions::fSubdetPM,
+	_cPedestalMeanDB.initialize(_name, "PedestalMeanDB", hcaldqm::hashfunctions::fdepth,
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),0);
-	_cPedestalRMSDB.initialize(_name, "PedestalRMSDB", hcaldqm::hashfunctions::fSubdetPM,
+	_cPedestalRMSDB.initialize(_name, "PedestalRMSDB", hcaldqm::hashfunctions::fdepth,
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),0);
