@@ -84,6 +84,18 @@ namespace hcaldqm
 			return hash;
 		}
 
+		uint32_t hash_SubdetPlan1(HcalDetId const &did) {
+			uint32_t hash = hash_Subdet(did);
+			if (did.subdet() == HcalEndcap) {
+				if (did.ieta() > 0) {
+					if ((63 <= did.iphi()) && (did.iphi() < 66)) {
+						hash = utilities::hash(HcalDetId(HcalEndcap, 16, 63, 1));
+					}
+				}
+			}
+			return hash;
+		}
+
 		uint32_t hash_DChannel(HcalDetId const& did)
 		{
 			return utilities::hash(did);
@@ -276,6 +288,18 @@ namespace hcaldqm
 			return std::string(name);
 		}
 
+		std::string name_SubdetPlan1(HcalDetId const& did) {
+			std::string name = name_Subdet(did);
+			if (did.subdet() == HcalEndcap) {
+				if (did.ieta() > 0) {
+					if ((63 <= did.iphi()) && (did.iphi() < 66)) {
+						name = "HEP17";
+					}
+				}
+			}
+			return name;
+		}
+
 		uint32_t hash_HBHEPartition(std::string const& name)
 		{
 			if (name[4]=='a')
@@ -286,6 +310,15 @@ namespace hcaldqm
 				return HcalDetId(HcalBarrel,1,55,1).rawId();
 
 			return HcalDetId().rawId();
+		}
+
+		uint32_t hash_SubdetPlan1(std::string const& name)
+		{
+			if (name == "HEP17") {
+				return HcalDetId(HcalEndcap,16,63,1);
+			} else {
+				return hash_Subdet(name);
+			}
 		}
 
 		std::string name_DChannel(HcalDetId const& did)

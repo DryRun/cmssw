@@ -32,52 +32,39 @@ namespace hcaldqm
 				//	get hash
 				using Mapper::getHash;
 				virtual uint32_t getHash(HcalDetId const& did) const
-				{return hash_did[_htype](did);}
+				{return hash_did.at(_htype)(did);}
 				virtual uint32_t getHash(HcalElectronicsId const& eid) const
-				{return hash_eid[_htype-nHashType_did-1](eid);}
+				{return hash_eid.at(_htype)(eid);}
 				virtual uint32_t getHash(HcalTrigTowerDetId const& tid) const
-				{return hash_tid[_htype-nHashType_eid-1](tid);}
+				{return hash_tid.at(_htype)(tid);}
 
 				//	get name of the hashed element
 				using Mapper::getName;
 				virtual std::string getName(HcalDetId const &did) const
-				{return hashfunctions::name_did[_htype](did);}
+				{return hashfunctions::name_did.at(_htype)(did);}
 				virtual std::string getName(HcalElectronicsId const& eid) const
-				{return hashfunctions::name_eid[_htype-nHashType_did-1](eid);}
+				{return hashfunctions::name_eid.at(_htype)(eid);}
 				virtual std::string getName(HcalTrigTowerDetId const& tid) const
-				{return hashfunctions::name_tid[_htype-nHashType_eid-1](tid);}
+				{return hashfunctions::name_tid.at(_htype)(tid);}
 
 				//	get the Hash Type Name
 				virtual std::string getHashTypeName() const
-				{return hash_names[this->getLinearHashType(_htype)];}
+				{return hash_names.at(_htype);}
 				virtual HashType getHashType() const
 				{return _htype;}
 
 				//	determine the type of the hash
 				virtual bool isDHash()  const
-				{return _htype<nHashType_did ? true : false;}
+				{return _htype<MAXDIDHASHTYPE ? true : false;}
 				virtual bool isEHash() const
 				{
-					return (_htype>nHashType_did && _htype<nHashType_eid) ? 
+					return (_htype>MAXDIDHASHTYPE && _htype<MAXEIDHASHTYPE) ? 
 						true : false;
 				}
 				virtual bool isTHash() const
 				{
-					return (_htype>nHashType_eid && _htype<nHashType_tid) ? 
+					return (_htype>MAXEIDHASHTYPE && _htype<MAXTIDHASHTYPE) ? 
 						true : false;
-				}
-
-				//	get the Linear Hash Type
-				virtual int getLinearHashType(HashType htype) const
-				{
-					int l = 0;
-					if (htype<nHashType_did)
-						l = htype;
-					else if (htype<nHashType_eid)
-						l = htype - 1;
-					else
-						l = htype - 2;
-					return l;
 				}
 
 			protected:
