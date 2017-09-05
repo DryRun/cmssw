@@ -219,12 +219,12 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 
 	// Debug bad pedestal RMS
 	_cPedestal_vs_PedestalDB.initialize(_name, "Pedestal_vs_PedestalDB", hcaldqm::hashfunctions::fSubdetPM,
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
 	_cPedestal_vs_LS.initialize(_name, "Pedestal_vs_LS", hcaldqm::hashfunctions::fSubdetPM,
 		new hcaldqm::quantity::LumiSection(500),
-		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
 	_cPedestalMeanDB.initialize(_name, "PedestalMeanDB", hcaldqm::hashfunctions::fSubdetPM,
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
