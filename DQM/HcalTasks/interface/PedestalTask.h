@@ -68,6 +68,7 @@ class PedestalTask : public hcaldqm::DQTask
 		hcaldqm::filter::HashFilter _filter_uTCA;
 		hcaldqm::filter::HashFilter _filter_VME;
 		hcaldqm::filter::HashFilter _filter_C38;
+		hcaldqm::filter::HashFilter _filter_HF;
 
 		//	thresholds
 		double _thresh_mean, _thresh_rms, _thresh_badm, _thresh_badr;
@@ -168,6 +169,10 @@ class PedestalTask : public hcaldqm::DQTask
 		//	Summaries
 		hcaldqm::Container2D _cSummaryvsLS_FED;
 		hcaldqm::ContainerSingle2D _cSummaryvsLS;
+
+		// Debug bad pedestal RMS
+		hcaldqm::Container2D _cPedestal_vs_PedestalDB;
+		hcaldqm::Container2D _cPedestal_vs_LS;
 };
 
 #endif

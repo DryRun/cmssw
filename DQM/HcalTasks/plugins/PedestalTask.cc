@@ -68,6 +68,10 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		vhashuTCA);
 	_filter_C38.initialize(filter::fFilter, hcaldqm::hashfunctions::fCrate,
 		vhashC38);
+	std::vector<uint32_t> vhashHF; 
+	vhashHF.push_back(hcaldqm::hashfunctions::hash_did.at(hcaldqm::hashfunctions::fSubdet)(HcalDetId(HcalForward, 29,1,1)));
+	_filter_HF.initialize(filter::fPreserver, hcaldqm::hashfunctions::fSubdet, vhashHF);
+
 
 	//	Containers XXX
 	_xPedSum1LS.initialize(hcaldqm::hashfunctions::fDChannel);
@@ -212,6 +216,17 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	_cADC_SubdetPM.initialize(_name, "ADC", hcaldqm::hashfunctions::fSubdetPM,
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_256),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true),0);
+
+	// Debug bad pedestal RMS
+	_cPedestal_vs_PedestalDB.initialize(_name, "Pedestal_vs_PedestalDB", hcaldqm::hashfunctions::fdepth,
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+	_cPedestal_vs_LS.initialize(_name, "Pedestal_vs_PedestalDB", hcaldqm::hashfunctions::fdepth,
+		new hcaldqm::quantity::LumiSection(500),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+
 
 	if (_ptype != fOffline) { // hidefed2crate
 		std::vector<int> vFEDs = hcaldqm::utilities::getFEDList(_emap);
@@ -365,6 +380,9 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	_cMissingTotal_depth.book(ib, _emap, _subsystem);
 	_cMeanBadTotal_depth.book(ib, _emap, _subsystem);
 	_cRMSBadTotal_depth.book(ib, _emap, _subsystem);
+
+	_cPedestal_vs_PedestalDB.book(ib, _emap, _subsystem);
+	_cPedestal_vs_LS.book(ib, _emap, _subsystem);
 
 	if (_ptype != fOffline) { // hidefed2crate
 		_cMean1LS_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
@@ -881,6 +899,8 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			_xPedSumTotal.get(did)+=it->sample(i).adc();
 			_xPedSum2Total.get(did)+=it->sample(i).adc()*it->sample(i).adc();
 			_xPedEntriesTotal.get(did)++;
+			_cPedestal_vs_PedestalDB.fill(did, it->sample(i).adc(), _xPedRefMean.get(did));
+			_cPedestal_vs_LS.fill(did, _currentLS, it->sample(i).adc());
 		}
 	}
 	for (QIE11DigiCollection::const_iterator it=chep17->begin(); it!=chep17->end();
