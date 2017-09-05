@@ -927,6 +927,9 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			_xPedSumTotal.get(did)+=digi[i].adc();
 			_xPedSum2Total.get(did)+=digi[i].adc()*digi[i].adc();
 			_xPedEntriesTotal.get(did)++;
+
+			_cPedestal_vs_PedestalDB.fill(did, digi[i].adc(), _xPedRefMean.get(did));
+			_cPedestal_vs_LS.fill(did, _currentLS, digi[i].adc());
 		}
 	}
 
@@ -954,6 +957,9 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			_xPedSumTotal.get(did)+=it->sample(i).adc();
 			_xPedSum2Total.get(did)+=it->sample(i).adc()*it->sample(i).adc();
 			_xPedEntriesTotal.get(did)++;
+
+			_cPedestal_vs_PedestalDB.fill(did, it->sample(i).adc(), _xPedRefMean.get(did));
+			_cPedestal_vs_LS.fill(did, _currentLS, it->sample(i).adc());
 		}
 	}
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalOuter, 1,1,1), 
@@ -981,6 +987,9 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 			_xPedSumTotal.get(did)+=digi[i].adc();
 			_xPedSum2Total.get(did)+=digi[i].adc()*digi[i].adc();
 			_xPedEntriesTotal.get(did)++;
+
+			_cPedestal_vs_PedestalDB.fill(did, digi[i].adc(), _xPedRefMean.get(did));
+			_cPedestal_vs_LS.fill(did, _currentLS, digi[i].adc());
 		}
 	}
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalForward, 1,1,1), 
