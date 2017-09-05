@@ -226,6 +226,14 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::LumiSection(500),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+	_cPedestalMeanDB.initialize(_name, "PedestalMeanDB", hcaldqm::hashfunctions::fSubdetPM,
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),0);
+	_cPedestalRMSDB.initialize(_name, "PedestalRMSDB", hcaldqm::hashfunctions::fSubdetPM,
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),0);
 
 
 	if (_ptype != fOffline) { // hidefed2crate
@@ -383,6 +391,8 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 
 	_cPedestal_vs_PedestalDB.book(ib, _emap, _subsystem);
 	_cPedestal_vs_LS.book(ib, _emap, _subsystem);
+	_cPedestalMeanDB.book(ib, _emap, _subsystem);
+	_cPedestalRMSDB.book(ib, _emap, _subsystem);
 
 	if (_ptype != fOffline) { // hidefed2crate
 		_cMean1LS_FEDVME.book(ib, _emap, _filter_uTCA, _subsystem);
@@ -603,6 +613,9 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 #ifndef HIDE_PEDESTAL_CONDITIONS
 		double refr = _xPedRefRMS.get(did);
 #endif
+		_cPedestalMeanDB.fill(did, refm);
+		_cPedestalRMSDB.fill(did, refr);
+
 		double n1LS = _xPedEntries1LS.get(did);
 		
 		double sumTotal = _xPedSumTotal.get(did);

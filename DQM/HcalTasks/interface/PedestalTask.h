@@ -173,6 +173,8 @@ class PedestalTask : public hcaldqm::DQTask
 		// Debug bad pedestal RMS
 		hcaldqm::Container2D _cPedestal_vs_PedestalDB;
 		hcaldqm::Container2D _cPedestal_vs_LS;
+		hcaldqm::Container2D _cPedestalMeanDB;
+		hcaldqm::Container2D _cPedestalRMSDB;
 };
 
 #endif
