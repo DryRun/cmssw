@@ -844,10 +844,13 @@ void PedestalTask::_dump()
 					_vflags[fBadM]._state = hcaldqm::flag::fBAD;
 				else
 					_vflags[fBadM]._state = hcaldqm::flag::fGOOD;
+				/*** 6 September 2017: removing bad RMS from good/bad flags. The RMS depends strongly on the instantaneous luminosity. ***/
+				/*
 				if (frbadr>=_thresh_badr)
 					_vflags[fBadR]._state = hcaldqm::flag::fBAD;
 				else
 					_vflags[fBadR]._state = hcaldqm::flag::fGOOD;
+				*/
 			}
 
 			int iflag=0;
@@ -1018,7 +1021,6 @@ void PedestalTask::_process(edm::Event const& e,
 	{
 		const QIE10DataFrame digi = static_cast<const QIE10DataFrame>(*it);
 		HcalDetId did = digi.detid();
-		did_flagged = digi.detid();
 		if (did.subdet() != HcalForward) {
 			continue;
 		}
@@ -1043,6 +1045,9 @@ void PedestalTask::_process(edm::Event const& e,
 			if (digi[i].adc() > 50) {
 				if (_debug_counter < 100) {
 					std::cout << "[debug] High pedestal found. debug_counter=" << _debug_counter << " / did = " << did_flagged << std::endl;
+				}
+				if (!high_pedestal) {
+					did_flagged = digi.detid();
 				}
 				high_pedestal = true;
 			}
