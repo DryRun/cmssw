@@ -175,6 +175,8 @@ class PedestalTask : public hcaldqm::DQTask
 		hcaldqm::Container2D _cPedestal_vs_LS;
 		hcaldqm::Container2D _cPedestalMeanDB;
 		hcaldqm::Container2D _cPedestalRMSDB;
+		int _debug_counter;
+		hcaldqm::Container2D _cPedestalDebug[100];
 };
 
 #endif

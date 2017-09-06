@@ -40,9 +40,11 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		"thresh_missing_high", 0.2);
 	_thresh_missing_low = ps.getUntrackedParameter<double>(
 		"thresh_missing_low", 0.05);
+	_debug_counter = 0;
 }
 
-/* virtual */ void PedestalTask::bookHistograms(DQMStore::IBooker &ib,
+/* virtual */ 
+void PedestalTask::bookHistograms(DQMStore::IBooker &ib,
 	edm::Run const& r, edm::EventSetup const& es)
 {
 	if (_ptype==fLocal)
@@ -234,7 +236,15 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),0);
-
+	for (int i = 0; i < 100; ++i) {
+		TString hnamedebug = "DebugPedestal_Event";
+		hnamedebug += i;
+		_cPedestalDebug[i].initialize(_name, hnamedebug.Data(), hcaldqm::hashfunctions::fdepth, 
+			new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
+			new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),0);
+		_cPedestalDebug[i].book(ib, _emap, _subsystem);
+	}
 
 	if (_ptype != fOffline) { // hidefed2crate
 		std::vector<int> vFEDs = hcaldqm::utilities::getFEDList(_emap);
@@ -485,7 +495,8 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	}
 }
 
-/* virtual */ void PedestalTask::_resetMonitors(hcaldqm::UpdateFreq uf)
+/* virtual */ 
+void PedestalTask::_resetMonitors(hcaldqm::UpdateFreq uf)
 {
 	DQTask::_resetMonitors(uf);
 
@@ -499,7 +510,8 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	}
 }
 
-/* virtual */ void PedestalTask::_dump()
+/* virtual */ 
+void PedestalTask::_dump()
 {
 	//	reset what's needed
 	
@@ -840,13 +852,15 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	
 }
 
-/* virtual */ void PedestalTask::beginLuminosityBlock(
+/* virtual */ 
+void PedestalTask::beginLuminosityBlock(
 	edm::LuminosityBlock const& lb, edm::EventSetup const& es)
 {
 	DQTask::beginLuminosityBlock(lb, es);
 }
 
-/* virtual */ void PedestalTask::endRun(edm::Run const& r,
+/* virtual */ 
+void PedestalTask::endRun(edm::Run const& r,
 	edm::EventSetup const&)
 {
 	if (_ptype==fLocal)
@@ -860,7 +874,8 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 		return;
 }
 
-/* virtual */ void PedestalTask::endLuminosityBlock(
+/* virtual */ 
+void PedestalTask::endLuminosityBlock(
 	edm::LuminosityBlock const& lb, edm::EventSetup const& es)
 {
 	if (_ptype==fLocal)
@@ -870,7 +885,8 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	DQTask::endLuminosityBlock(lb, es);
 }
 
-/* virtual */ void PedestalTask::_process(edm::Event const& e,
+/* virtual */ 
+void PedestalTask::_process(edm::Event const& e,
 	edm::EventSetup const& es)
 {
 	edm::Handle<HBHEDigiCollection>		chbhe;
@@ -978,6 +994,7 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalOuter, 1,1,1), 
 		_currentLS, nHO);
 
+	bool high_pedestal = false;
 	for (QIE10DigiCollection::const_iterator it=chf->begin();
 		it!=chf->end(); ++it)
 	{
@@ -1003,13 +1020,66 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 
 			_cPedestal_vs_PedestalDB.fill(did, digi[i].adc(), _xPedRefMean.get(did));
 			_cPedestal_vs_LS.fill(did, _currentLS, digi[i].adc());
-		}
+
+			if (digi[i].adc() > 50) {
+				high_pedestal = true;
+			}
+		}		
 	}
 	_cOccupancyEAvsLS_Subdet.fill(HcalDetId(HcalForward, 1,1,1), 
 		_currentLS, nHF);
+
+	if (high_pedestal && _debug_counter < 100) {
+		for (HBHEDigiCollection::const_iterator it=chbhe->begin();
+			it!=chbhe->end(); ++it)
+		{
+			const HBHEDataFrame digi = (const HBHEDataFrame)(*it);
+			HcalDetId did = digi.id();
+			if ((did.subdet() != HcalEndcap) && (did.subdet() != HcalBarrel)) {
+				continue;
+			}
+			for (int i=0; i<digi.size(); i++) {
+				_cPedestalDebug[_debug_counter].fill(did, it->sample(i).adc());
+			}
+		}
+		for (QIE11DigiCollection::const_iterator it=chep17->begin(); it!=chep17->end(); ++it) {
+			const QIE11DataFrame digi = static_cast<const QIE11DataFrame>(*it);
+			HcalDetId const& did = digi.detid();
+			// Require barrel or endcap. As of 2017, some calibration channels are ending up in this collection.
+			if ((did.subdet() != HcalEndcap) && (did.subdet() != HcalBarrel)) {
+				continue;
+			}
+			for (int i=0; i<digi.samples(); i++) {
+				_cPedestalDebug[_debug_counter].fill(did, digi[i].adc());
+			}
+		}
+		for (HODigiCollection::const_iterator it=cho->begin(); it!=cho->end(); ++it) {
+			const HODataFrame digi = (const HODataFrame)(*it);
+			HcalDetId did = digi.id();
+			for (int i=0; i<digi.size(); i++)
+			{
+				_cPedestalDebug[_debug_counter].fill(did, it->sample(i).adc());
+			}
+		}
+		for (QIE10DigiCollection::const_iterator it=chf->begin();
+			it!=chf->end(); ++it)
+		{
+			const QIE10DataFrame digi = static_cast<const QIE10DataFrame>(*it);
+			HcalDetId did = digi.detid();
+			if (did.subdet() != HcalForward) {
+				continue;
+			}
+			for (int i=0; i<digi.samples(); i++)
+			{
+				_cPedestalDebug[_debug_counter].fill(did, digi[i].adc());
+			}
+		}
+		++_debug_counter;
+	}
 }
 
-/* virtual */ bool PedestalTask::_isApplicable(edm::Event const& e)
+/* virtual */ 
+bool PedestalTask::_isApplicable(edm::Event const& e)
 {
 	if (_ptype==fOnline)
 	{
