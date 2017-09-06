@@ -1022,6 +1022,9 @@ void PedestalTask::_process(edm::Event const& e,
 			_cPedestal_vs_LS.fill(did, _currentLS, digi[i].adc());
 
 			if (digi[i].adc() > 50) {
+				if (_debug_counter < 100) {
+					std::cout << "[debug] High pedestal found. debug_counter=" << _debug_counter << " / did = " << did << std::endl;
+				}
 				high_pedestal = true;
 			}
 		}		
