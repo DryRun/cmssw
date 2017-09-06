@@ -1052,6 +1052,8 @@ void PedestalTask::_process(edm::Event const& e,
 		_currentLS, nHF);
 
 	if (high_pedestal && _debug_counter < 100) {
+		std::cout << "[debug] Filling debug histograms for high pedestal event. Flagged did = " << did_flagged << std::endl;
+
 		for (HBHEDigiCollection::const_iterator it=chbhe->begin();
 			it!=chbhe->end(); ++it)
 		{
