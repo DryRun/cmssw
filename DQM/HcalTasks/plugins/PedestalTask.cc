@@ -237,13 +237,30 @@ void PedestalTask::bookHistograms(DQMStore::IBooker &ib,
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_15),0);
 	for (int i = 0; i < 100; ++i) {
-		TString hnamedebug = "DebugPedestal_Event";
+		TString hnamedebug = "DebugEvent";
 		hnamedebug += i;
+		hnamedebug += "_Pedestal";
 		_cPedestalDebug[i].initialize(_name, hnamedebug.Data(), hcaldqm::hashfunctions::fdepth, 
 			new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
 			new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
 			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),0);
 		_cPedestalDebug[i].book(ib, _emap, _subsystem);
+
+		hnamedebug = "DebugEvent";
+		hnamedebug += i;
+		hnamedebug += "_Shape";
+		_cPedestalDebugShape[i].initialize(_name, hnamedebug.Data(), 
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),0);
+		_cPedestalDebugShape[i].book(ib, _subsystem);
+
+		hnamedebug = "DebugEvent";
+		hnamedebug += i;
+		hnamedebug += "_ShapeOtherAnode";
+		_cPedestalDebugShape_OtherAnode[i].initialize(_name, hnamedebug.Data(), 
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTiming_TS),
+			new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fADC_128),0);
+		_cPedestalDebugShape_OtherAnode[i].book(ib, _subsystem);
 	}
 
 	if (_ptype != fOffline) { // hidefed2crate
@@ -995,11 +1012,13 @@ void PedestalTask::_process(edm::Event const& e,
 		_currentLS, nHO);
 
 	bool high_pedestal = false;
+	HcalDetId did_flagged;
 	for (QIE10DigiCollection::const_iterator it=chf->begin();
 		it!=chf->end(); ++it)
 	{
 		const QIE10DataFrame digi = static_cast<const QIE10DataFrame>(*it);
 		HcalDetId did = digi.detid();
+		did_flagged = digi.detid();
 		if (did.subdet() != HcalForward) {
 			continue;
 		}
@@ -1075,6 +1094,17 @@ void PedestalTask::_process(edm::Event const& e,
 			for (int i=0; i<digi.samples(); i++)
 			{
 				_cPedestalDebug[_debug_counter].fill(did, digi[i].adc());
+			}
+			if (did == did_flagged) {
+				for (int i=0; i<digi.samples(); i++) {
+					_cPedestalDebugShape[_debug_counter].setBinContent(i+1, digi[i].adc());
+				}
+			} else if (did.subdet() == did_flagged.subdet() && did.ieta() == did_flagged.ieta() && did.iphi() == did_flagged.iphi()) {
+				if ((did.depth() == 1 && did_flagged.depth() == 3) || (did.depth() == 3 && did_flagged.depth() == 1) || (did.depth() == 2 && did_flagged.depth() == 4) || (did.depth() == 4 && did_flagged.depth() == 2)) {
+					for (int i=0; i<digi.samples(); i++) {
+						_cPedestalDebugShape_OtherAnode[_debug_counter].setBinContent(i+1, digi[i].adc());
+					}
+				}
 			}
 		}
 		++_debug_counter;

@@ -13,6 +13,7 @@
 #include "DQM/HcalCommon/interface/Container2D.h"
 #include "DQM/HcalCommon/interface/ContainerProf1D.h"
 #include "DQM/HcalCommon/interface/ContainerProf2D.h"
+#include "DQM/HcalCommon/interface/ContainerSingle1D.h"
 #include "DQM/HcalCommon/interface/ContainerSingle2D.h"
 #include "DQM/HcalCommon/interface/ContainerXXX.h"
 #include "DQM/HcalCommon/interface/HashFilter.h"
@@ -177,6 +178,8 @@ class PedestalTask : public hcaldqm::DQTask
 		hcaldqm::Container2D _cPedestalRMSDB;
 		int _debug_counter;
 		hcaldqm::Container2D _cPedestalDebug[100];
+		hcaldqm::ContainerSingle1D _cPedestalDebugShape[100];
+		hcaldqm::ContainerSingle1D _cPedestalDebugShape_OtherAnode[100];
 };
 
 #endif
