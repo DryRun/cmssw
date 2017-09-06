@@ -1042,7 +1042,7 @@ void PedestalTask::_process(edm::Event const& e,
 
 			if (digi[i].adc() > 50) {
 				if (_debug_counter < 100) {
-					std::cout << "[debug] High pedestal found. debug_counter=" << _debug_counter << " / did = " << did << std::endl;
+					std::cout << "[debug] High pedestal found. debug_counter=" << _debug_counter << " / did = " << did_flagged << std::endl;
 				}
 				high_pedestal = true;
 			}
@@ -1095,8 +1095,10 @@ void PedestalTask::_process(edm::Event const& e,
 			{
 				_cPedestalDebug[_debug_counter].fill(did, digi[i].adc());
 			}
-			if (did == did_flagged) {
+			if (did.subdet() == did_flagged.subdet() && did.ieta() == did_flagged.ieta() && did.iphi() == did_flagged.iphi() && did.depth() == did_flagged.depth()) {
+				std::cout << "[debug] Filling pulse shape histogram" << std::endl;
 				for (int i=0; i<digi.samples(); i++) {
+					std::cout << "[debug] TS " << i << " / ADC = " << digi[i].adc() << std::endl;
 					_cPedestalDebugShape[_debug_counter].setBinContent(i+1, digi[i].adc());
 				}
 			} else if (did.subdet() == did_flagged.subdet() && did.ieta() == did_flagged.ieta() && did.iphi() == did_flagged.iphi()) {
