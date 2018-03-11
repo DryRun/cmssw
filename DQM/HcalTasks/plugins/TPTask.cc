@@ -836,65 +836,42 @@ TPTask::TPTask(edm::ParameterSet const& ps):
 		}
 	}
 
-	if (rawidHFValid!=0 && rawidHBHEValid!=0)
-	{
-		//	ONLINE ONLY!
-		if (_ptype==fOnline)
-		{
-			_cOccupancyDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx,
-				numHBHE);
-			_cOccupancyDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx,
-				numHF);
-			_cOccupancyCutDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), 
-				bx, numCutHBHE);
-			_cOccupancyCutDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx,
-				numCutHF);
-			_cOccupancyDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), 
-				_currentLS, numHBHE);
-			_cOccupancyDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), 
-				_currentLS,numHF);
-			_cOccupancyCutDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid),
-				_currentLS, numCutHBHE);
-			_cOccupancyCutDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), 
-				_currentLS, numCutHF);
+	if (_ptype==fOnline) {
+		if (rawidHBHEValid != 0) {
+			_cOccupancyDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx, numHBHE);
+			_cOccupancyCutDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx, numCutHBHE);
+			_cOccupancyDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), _currentLS, numHBHE);
+			_cOccupancyCutDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid),_currentLS, numCutHBHE);
+
+			_cEtMsmvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), _currentLS, numMsmHBHE);
+			_cEtMsmvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx, numMsmHBHE);
+
+			_cEtMsmRatiovsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), _currentLS, double(numMsmHBHE)/double(numCorrHBHE));
+			_cEtMsmRatiovsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx, double(numMsmHBHE)/double(numCorrHBHE));
+
+			_cMsnEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), _currentLS, numMsnHBHE);
+			_cMsnCutEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), _currentLS, numMsnCutHBHE);
+
+			_cMsnEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx, numMsnHBHE);
+			_cMsnCutEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx, numMsnCutHBHE);
+		}
+		if (rawidHFValid!=0) {
+			_cOccupancyDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx,	numHF);
+			_cOccupancyCutDatavsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, numCutHF);
+			_cOccupancyDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS,numHF);
+			_cOccupancyCutDatavsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS, numCutHF);
 	
-			_cEtMsmvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), _currentLS,
-				numMsmHBHE);
-			_cEtMsmvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS, 
-				numMsmHF);
-			_cEtMsmvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx,
-				numMsmHBHE);
-			_cEtMsmvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, 
-				numMsmHF);
+			_cEtMsmvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS, numMsmHF);
+			_cEtMsmvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, numMsmHF);
 			
-			_cEtMsmRatiovsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), 
-				_currentLS,
-				double(numMsmHBHE)/double(numCorrHBHE));
-			_cEtMsmRatiovsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), 
-				_currentLS, 
-				double(numMsmHF)/double(numCorrHF));
-			_cEtMsmRatiovsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid), bx,
-				double(numMsmHBHE)/double(numCorrHBHE));
-			_cEtMsmRatiovsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, 
-				double(numMsmHF)/double(numCorrHF));
+			_cEtMsmRatiovsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS, double(numMsmHF)/double(numCorrHF));
+			_cEtMsmRatiovsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, double(numMsmHF)/double(numCorrHF));
 	
-			_cMsnEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid),
-				_currentLS, numMsnHBHE);
-			_cMsnEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid),
-				_currentLS, numMsnHF);
-			_cMsnCutEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid),
-				_currentLS, numMsnCutHBHE);
-			_cMsnCutEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid),
-				_currentLS, numMsnCutHF);
+			_cMsnEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS, numMsnHF);
+			_cMsnCutEmulvsLS_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), _currentLS, numMsnCutHF);
 	
-			_cMsnEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid),
-				bx, numMsnHBHE);
-			_cMsnEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid),
-				bx, numMsnHF);
-			_cMsnCutEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHBHEValid),
-				bx, numMsnCutHBHE);
-			_cMsnCutEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid),
-				bx, numMsnCutHF);
+			_cMsnEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, numMsnHF);
+			_cMsnCutEmulvsBX_TTSubdet.fill(HcalTrigTowerDetId(rawidHFValid), bx, numMsnCutHF);
 		}
 	}
 
