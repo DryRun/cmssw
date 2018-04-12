@@ -62,6 +62,9 @@ namespace hcaldqm
 			fTimingRatio = 47,
 			fQIE10fC_100000Coarse = 48,
 			fBadTDC = 49,
+			fRBX = 50,
+			fTimingDiff_ns = 51,
+			ffC_1000000 = 52,
 		};
 		const std::map<ValueQuantityType, std::string> name_value = {
 			{fN,"N"},
@@ -114,6 +117,9 @@ namespace hcaldqm
 			{fTimingRatio, "q_{SOI+1}/q_{SOI}"},
 			{fQIE10fC_100000Coarse,"fC"},
 			{fBadTDC, "TDC"},
+			{fRBX, "RBX"},
+			{fTimingDiff_ns, "#Delta timing [ns]"},
+			{ffC_1000000, "fC"}
 		};
 		const std::map<ValueQuantityType, double> min_value = {
 			{fN,-0.05},
@@ -127,7 +133,7 @@ namespace hcaldqm
 			{ffC_1000,0},
 			{ffC_3000,0},
 			{fTiming_TS,-0.5},
-			{fTiming_TS200,0},
+			{fTiming_TS200,-0.5},
 			{fLS,0.5},
 			{fEt_256,0},
 			{fEt_128,0},
@@ -166,6 +172,9 @@ namespace hcaldqm
 			{fTimingRatio,0.},	
 			{fQIE10fC_100000Coarse,0},
 			{fBadTDC,49.5},
+			{fRBX, 0.5},
+			{fTimingDiff_ns, -125.},
+			{ffC_1000000,0.}
 		};
 		const std::map<ValueQuantityType, double> max_value = {
 			{fN,1000},
@@ -218,6 +227,9 @@ namespace hcaldqm
 			{fTimingRatio,2.5},	
 			{fQIE10fC_100000Coarse,100000},
 			{fBadTDC,61.5},
+			{fRBX, 18.5},
+			{fTimingDiff_ns, 125.},
+			{ffC_1000000,1.e6},
 		};
 		const std::map<ValueQuantityType, int> nbins_value = {
 			{fN,200},
@@ -268,7 +280,10 @@ namespace hcaldqm
 			{fDualAnodeAsymmetry,40},
 			{fTimingRatio,50},
 			{fQIE10fC_100000Coarse,1000},
-			{fBadTDC,12}
+			{fBadTDC,12},
+			{fRBX, 18},
+			{fTimingDiff_ns, 40},
+			{ffC_1000000,1000},
 		};
 		class ValueQuantity : public Quantity
 		{
@@ -366,6 +381,36 @@ namespace hcaldqm
 
 			protected:
 				int _n;
+		};
+
+		/**
+		 * Coarse LumiSection axis. Specify binning (default=10 LS)
+		 */
+		class LumiSectionCoarse : public ValueQuantity
+		{
+			public:
+				LumiSectionCoarse() : ValueQuantity(fLS), _n(4000), _binning(10)
+				{}
+				LumiSectionCoarse(int n, int binning) : ValueQuantity(fLS), 
+					_n(n), _binning(binning) 
+				{}
+				~LumiSectionCoarse() override {}
+				
+				LumiSectionCoarse* makeCopy() override
+				{return new LumiSectionCoarse(_n, _binning);}
+
+				std::string name() override {return "LS";}
+				int nbins() override {return (_n + _binning - 1) / _binning;}
+				double min() override {return 1;}
+				double max() override {return _n+1;}
+				int getValue(int l) override {return l;}
+				uint32_t getBin(int l) override 
+				{return (l + _binning - 1) / _binning;}
+				void setMax(double x) override {_n=x;}
+
+			protected:
+				int _n;
+				int _binning;
 		};
 
 		class RunNumber : public ValueQuantity
