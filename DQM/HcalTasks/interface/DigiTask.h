@@ -185,6 +185,9 @@ class DigiTask : public hcaldqm::DQTask
 		hcaldqm::ContainerSingle2D _cSummaryvsLS; // online only
 
 		bool _qie10InConditions; // Flag to protect against QIE10 digis not in conditions in 2016.
+
+		// For monitoring LED misfires: ADC vs BX
+		MonitorElement* _meLEDMon;
 };
 
 #endif
