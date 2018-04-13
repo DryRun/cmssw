@@ -1178,6 +1178,26 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		}
 	}
 
+	// HE calibration channels
+	for (QIE11DigiCollection::const_iterator it=che_qie11->begin(); it!=che_qie11->end();
+ 		++it)
+ 	{
+ 		const QIE11DataFrame digi = static_cast<const QIE11DataFrame>(*it);
+ 		//	Explicit check on the DetIds present in the Collection
+ 		HcalDetId const& did = digi.detid();
+		if (did.subdet() == HcalOther) {
+			HcalOtherDetId hodid(digi.detid());
+			if (hodid.subdet() == HcalCalibration) {
+				if (did.depth() == 0) {
+					for (int i=0; i<digi.samples(); i++) {
+						_meLEDMon->Fill(bx, digi[i].adc());
+					}
+				}
+			}
+		}
+	}	
+
+
 	if (rawidValid!=0)
 	{
 		_cOccupancyvsLS_Subdet.fill(HcalDetId(rawidValid), _currentLS, 
