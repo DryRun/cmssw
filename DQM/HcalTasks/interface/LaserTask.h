@@ -83,6 +83,8 @@ class LaserTask : public hcaldqm::DQTask
 		//	1D
 		hcaldqm::Container1D		_cSignalMean_Subdet;
 		hcaldqm::Container1D		_cSignalRMS_Subdet;
+		hcaldqm::Container1D		_cSignalMeanQIE1011_Subdet;
+		hcaldqm::Container1D		_cSignalRMSQIE1011_Subdet;
 		hcaldqm::Container1D		_cTimingMean_Subdet;
 		hcaldqm::Container1D		_cTimingRMS_Subdet;
 
@@ -94,12 +96,16 @@ class LaserTask : public hcaldqm::DQTask
 		hcaldqm::ContainerProf1D _cSignalvsEvent_SubdetPM;
 		hcaldqm::ContainerProf1D _cTimingvsLS_SubdetPM;
 		hcaldqm::ContainerProf1D _cSignalvsLS_SubdetPM;
+		hcaldqm::ContainerProf1D _cSignalvsLSQIE1011_SubdetPM;
 		hcaldqm::ContainerProf1D _cTimingvsBX_SubdetPM;
 		hcaldqm::ContainerProf1D _cSignalvsBX_SubdetPM;
+		hcaldqm::ContainerProf1D _cSignalvsBXQIE1011_SubdetPM;
 
 		//	2D timing/signals
 		hcaldqm::ContainerProf2D		_cSignalMean_depth;
 		hcaldqm::ContainerProf2D		_cSignalRMS_depth;
+		hcaldqm::ContainerProf2D		_cSignalMeanQIE1011_depth;
+		hcaldqm::ContainerProf2D		_cSignalRMSQIE1011_depth;
 		hcaldqm::ContainerProf2D		_cTimingMean_depth;
 		hcaldqm::ContainerProf2D		_cTimingRMS_depth;
 
