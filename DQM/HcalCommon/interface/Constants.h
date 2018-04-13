@@ -322,6 +322,7 @@ namespace hcaldqm
 		 */
 		uint8_t const EVENTTYPE_PEDESTAL = 1;
 		uint8_t const EVENTTYPE_LASER = 14;
+		uint8_t const EVENTTYPE_LED = 15;
 		enum OrbitGapType
 		{
 			tUnkown = -1,
