@@ -489,6 +489,12 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		_cSummaryvsLS_FED.book(ib, _emap, _subsystem);
 		_cSummaryvsLS.book(ib, _subsystem);
 
+		// Manually book LED monitoring histogram, to get custom axis
+		ib.setCurrentFolder(_subsystem+"/"+_name);
+		_meLEDMon = ib.book2D("LED_ADCvsBX", "ADC vs BX", 99, -0.5, 3564-0.5, 64, -0.5, 255.5);
+		_meLEDMon->setAxisTitle("BX", 1);
+		_meLEDMon->setAxisTitle("ADC", 2);
+
 		_xUniHF.book(_emap, _filter_FEDHF);
 		_xNChs.book(_emap);
 		_xNChsNominal.book(_emap);
