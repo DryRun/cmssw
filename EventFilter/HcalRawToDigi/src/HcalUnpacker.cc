@@ -9,6 +9,8 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "EventFilter/HcalRawToDigi/interface/HcalTTPUnpacker.h"
 #include "EventFilter/HcalRawToDigi/plugins/HcalRawToDigi.h"
+#include "DataFormats/HcalDetId/interface/HcalDetId.h"
+#include "DataFormats/HcalDetId/interface/HcalGenericDetId.h"
 
 //#define DebugLog
 
@@ -633,6 +635,13 @@ void HcalUnpacker::unpackUTCA(const FEDRawData& raw, const HcalElectronicsMap& e
           int ichan=(i.channelid()&0x7);
           HcalElectronicsId eid(crate,slot,ifiber,ichan, false);
           DetId did=emap.lookup(eid);
+          HcalDetId hdid(did.rawId());
+          HcalGenericDetId hgdid(did.rawId());
+          if (hdid.rawId() != hgdid.rawId()) {
+            std::cout << "[HcalUnpacker::unpackUTCA] WARNING : HcalDetId - HcalGenericDetId rawId mismatch" << std::endl;
+            std::cout << "[HcalUnpacker::unpackUTCA] WARNING : \tHcalDetId = " << hdid << ", rawId = " << hdid.rawId() << ", rawId hex = " << std::hex << hdid.rawId() << std::endl;
+            std::cout << "[HcalUnpacker::unpackUTCA] WARNING : \tHcalGenericDetId = " << hgdid << ", rawId = " << hgdid.rawId() << ", rawId hex = " << std::hex << hgdid.rawId() << std::endl;
+          }
           // Count from current position to next header, or equal to end
           const uint16_t* head_pos = i.raw();
           int ns = 0;
