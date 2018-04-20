@@ -193,10 +193,10 @@ process.dqmPath1 = cms.EndPath(
 
 process.schedule = cms.Schedule(
 	process.preRecoPath,
-	#process.tasksPath,
-	#process.harvestingPath,
-	#process.dqmPath,
-	#process.dqmPath1
+	process.tasksPath,
+	process.harvestingPath,
+	process.dqmPath,
+	process.dqmPath1
 )
 
 #-------------------------------------
