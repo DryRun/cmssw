@@ -3,7 +3,7 @@
 
 /**
  *	file:			DigiTask.h
- *	Author:			VK
+ *	Author:			VK, DY
  *	Description:
  *		HCAL DIGI Data Tier Processing.
  *
@@ -26,12 +26,16 @@
 #include "DQM/HcalCommon/interface/ContainerSingleProf2D.h"
 #include "DQM/HcalCommon/interface/ContainerXXX.h"
 
+#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+
 class DigiTask : public hcaldqm::DQTask
 {
 	public:
 		DigiTask(edm::ParameterSet const&);
 		~DigiTask() override {}
 
+		void dqmBeginRun(edm::Run const&, edm::EventSetup const&) override;
 		void bookHistograms(DQMStore::IBooker&,
 			edm::Run const&, edm::EventSetup const&) override;
 		void beginLuminosityBlock(edm::LuminosityBlock const&,
@@ -51,6 +55,12 @@ class DigiTask : public hcaldqm::DQTask
 		edm::EDGetTokenT<QIE11DigiCollection> _tokHE;
 		edm::EDGetTokenT<HODigiCollection>	 _tokHO;
 		edm::EDGetTokenT<QIE10DigiCollection>	_tokHF;
+
+		edm::InputTag		_tagHLT;
+		edm::EDGetTokenT<edm::TriggerResults> _tokHLT;
+		HLTConfigProvider _hltConfig;
+		std::vector<std::string> _hltTrain1Names; // Name of HLT path for first BX in train
+		std::vector<unsigned int> _hltTrain1Indices; // Name of HLT path for first BX in train
 
 		double _cutSumQ_HBHE, _cutSumQ_HE, _cutSumQ_HO, _cutSumQ_HF;
 		double _thresh_unihf;
@@ -169,6 +179,7 @@ class DigiTask : public hcaldqm::DQTask
 		hcaldqm::Container2D _cLETDCvsTS_SubdetPM;
 		hcaldqm::Container1D _cLETDCTime_SubdetPM;
 		hcaldqm::ContainerProf2D _cLETDCTime_depth;
+		hcaldqm::ContainerProf2D _cLETDCTime_cut_train1_depth;
 
 		// Bad TDC histograms
 		hcaldqm::Container1D _cBadTDCValues_SubdetPM;

@@ -9,32 +9,32 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 {
 	_tagHBHE = ps.getUntrackedParameter<edm::InputTag>("tagHBHE",
 		edm::InputTag("hcalDigis"));
-	_tagHE = ps.getUntrackedParameter<edm::InputTag>("tagHE",
+	_tagHE   = ps.getUntrackedParameter<edm::InputTag>("tagHE",
 		edm::InputTag("hcalDigis"));
-	_tagHO = ps.getUntrackedParameter<edm::InputTag>("tagHO",
+	_tagHO   = ps.getUntrackedParameter<edm::InputTag>("tagHO",
 		edm::InputTag("hcalDigis"));
-	_tagHF = ps.getUntrackedParameter<edm::InputTag>("tagHF",
+	_tagHF   = ps.getUntrackedParameter<edm::InputTag>("tagHF",
 		edm::InputTag("hcalDigis"));
 
 	_tokHBHE = consumes<HBHEDigiCollection>(_tagHBHE);
-	_tokHE = consumes<QIE11DigiCollection>(_tagHE);
-	_tokHO = consumes<HODigiCollection>(_tagHO);
-	_tokHF = consumes<QIE10DigiCollection>(_tagHF);
+	_tokHE   = consumes<QIE11DigiCollection>(_tagHE);
+	_tokHO   = consumes<HODigiCollection>(_tagHO);
+	_tokHF   = consumes<QIE10DigiCollection>(_tagHF);
 
 	_cutSumQ_HBHE = ps.getUntrackedParameter<double>("cutSumQ_HBHE", 20);
-	_cutSumQ_HE = ps.getUntrackedParameter<double>("cutSumQ_HE", 20);
-	_cutSumQ_HO = ps.getUntrackedParameter<double>("cutSumQ_HO", 20);
-	_cutSumQ_HF = ps.getUntrackedParameter<double>("cutSumQ_HF", 20);
+	_cutSumQ_HE   = ps.getUntrackedParameter<double>("cutSumQ_HE", 20);
+	_cutSumQ_HO   = ps.getUntrackedParameter<double>("cutSumQ_HO", 20);
+	_cutSumQ_HF   = ps.getUntrackedParameter<double>("cutSumQ_HF", 20);
 	_thresh_unihf = ps.getUntrackedParameter<double>("thresh_unihf", 0.2);
-	_thresh_led = ps.getUntrackedParameter<double>("thresh_led", 20);
+	_thresh_led   = ps.getUntrackedParameter<double>("thresh_led", 20);
 
 	_vflags.resize(nDigiFlag);
-	_vflags[fUni]=hcaldqm::flag::Flag("UniSlotHF");
-	_vflags[fDigiSize]=hcaldqm::flag::Flag("DigiSize");
-	_vflags[fNChsHF]=hcaldqm::flag::Flag("NChsHF");
-	_vflags[fUnknownIds]=hcaldqm::flag::Flag("UnknownIds");
-	_vflags[fLED]=hcaldqm::flag::Flag("LEDMisfire");
-	_vflags[fCapId]=hcaldqm::flag::Flag("BadCapId");
+	_vflags[fUni]        = hcaldqm::flag::Flag("UniSlotHF");
+	_vflags[fDigiSize]   = hcaldqm::flag::Flag("DigiSize");
+	_vflags[fNChsHF]     = hcaldqm::flag::Flag("NChsHF");
+	_vflags[fUnknownIds] = hcaldqm::flag::Flag("UnknownIds");
+	_vflags[fLED]        = hcaldqm::flag::Flag("LEDMisfire");
+	_vflags[fCapId]      = hcaldqm::flag::Flag("BadCapId");
 
 	_qie10InConditions = ps.getUntrackedParameter<bool>("qie10InConditions", true);
 
@@ -46,12 +46,20 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	_refDigiSize[HcalForward] = (int)vrefDigiSize[3];
 
 	// (capid - BX) % 4 to 1
-	_capidmbx[HcalBarrel] = 1;
-	_capidmbx[HcalEndcap] = 1;
-	_capidmbx[HcalOuter] = 1;
+	_capidmbx[HcalBarrel]  = 1;
+	_capidmbx[HcalEndcap]  = 1;
+	_capidmbx[HcalOuter]   = 1;
 	_capidmbx[HcalForward] = 1;
-}
 
+	// Trigger things, for first BX in train selection
+	_tagHLT  = ps.getUntrackedParameter<edm::InputTag>("tagHLT", 
+		edm::InputTag("TriggerResults", "", "HLT"));
+	_tokHLT  = consumes<edm::TriggerResults>(_tagHLT);
+	_hltTrain1Names = ps.getUntrackedParameter<std::vector<std::string> >("hltTrain1Names", 
+		std::vector<std::string>({"HLT_ZeroBias_FirstCollisionInTrain_v1", "HLT_ZeroBias_FirstCollisionInTrain_v2", "HLT_ZeroBias_FirstCollisionInTrain_v3", "HLT_ZeroBias_FirstCollisionInTrain_v4"}));
+
+}
+	
 /* virtual */ void DigiTask::bookHistograms(DQMStore::IBooker& ib,
 	edm::Run const& r, edm::EventSetup const& es)
 {
@@ -186,6 +194,11 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fTime_ns_250),
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN, true));
 	_cLETDCTime_depth.initialize(_name, "LETDCTime",
+		hcaldqm::hashfunctions::fdepth,
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN),0);
+	_cLETDCTime_cut_train1_depth.initialize(_name, "LETDCTime_Cut_Train1",
 		hcaldqm::hashfunctions::fdepth,
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta),
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi),
@@ -487,6 +500,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	_cLETDCvsTS_SubdetPM.book(ib, _emap, _subsystem);
 	_cLETDCTime_SubdetPM.book(ib, _emap, _subsystem);
 	_cLETDCTime_depth.book(ib, _emap, _subsystem);
+	_cLETDCTime_cut_train1_depth.book(ib, _emap, _subsystem);
 
 	_cBadTDCValues_SubdetPM.book(ib, _emap, _subsystem);
 	_cBadTDCvsBX_SubdetPM.book(ib, _emap, _subsystem);
@@ -624,17 +638,29 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	edm::Handle<QIE10DigiCollection>       chf;
 
 	if (!e.getByToken(_tokHBHE, chbhe))
-		_logger.dqmthrow("Collection HBHEDigiCollection isn't available"
+		_logger.dqmthrow("Collection HBHEDigiCollection isn't : "
 			+ _tagHBHE.label() + " " + _tagHBHE.instance());
 	if (!e.getByToken(_tokHE, che_qie11))
-		_logger.dqmthrow("Collection QIE11DigiCollection isn't available"
+		_logger.dqmthrow("Collection QIE11DigiCollection isn't : "
 			+ _tagHE.label() + " " + _tagHE.instance());
 	if (!e.getByToken(_tokHO, cho))
-		_logger.dqmthrow("Collection HODigiCollection isn't available"
+		_logger.dqmthrow("Collection HODigiCollection isn't : "
 			+ _tagHO.label() + " " + _tagHO.instance());
 	if (!e.getByToken(_tokHF, chf))
-		_logger.dqmthrow("Collection QIE10DigiCollection isn't available"
+		_logger.dqmthrow("Collection QIE10DigiCollection isn't : "
 			+ _tagHF.label() + " " + _tagHF.instance());
+
+	// First bunch in train?
+	edm::Handle<edm::TriggerResults> chlt;
+	if (!e.getByToken(_tokHLT, chlt))
+		_logger.dqmthrow(" TriggerResults object isn't available: "
+			+ _tagHLT.label() + " : " + _tagHLT.instance());
+	bool firstBXInTrain = false;
+	for (auto& it_trigIndex : _hltTrain1Indices) {
+		//std::cout << "[debug] chlt->accept(" << it_trigIndex<< ") = " << chlt->accept(it_trigIndex) << std::endl;
+		//std::cout << "[debug] chlt->wasrun(" << it_trigIndex<< ") = " << chlt->wasrun(it_trigIndex) << std::endl;
+		firstBXInTrain = firstBXInTrain || chlt->accept(it_trigIndex);
+	}
 
 	//	extract some info per event
 	int bx = e.bunchCrossing();
@@ -924,7 +950,12 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 				double time = i*25. + (digi[i].tdc() / 2.);
 				_cLETDCTime_SubdetPM.fill(did, time);
 				_cLETDCTime_depth.fill(did, time);
-				_cLETDCTimevsADC_SubdetPM.fill(did, digi[i].adc(), time);
+				if (firstBXInTrain) {
+					if (7000. < sumQ and sumQ < 11000.) {
+						_cLETDCTime_cut_train1_depth.fill(did, time);
+					}
+					_cLETDCTimevsADC_SubdetPM.fill(did, digi[i].adc(), time);
+				}
 			}
 			// Bad TDC values: 50-61 should never happen in QIE10 or QIE11, but we saw some in 2017 data.
 			if ((50 <= digi[i].tdc()) && (digi[i].tdc() <= 61)) {
@@ -1366,6 +1397,27 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 	edm::LuminosityBlock const& lb, edm::EventSetup const& es)
 {
 	DQTask::beginLuminosityBlock(lb, es);
+
+}
+
+/* virtual */ void DigiTask::dqmBeginRun(edm::Run const& r,
+	edm::EventSetup const& es)
+{
+	DQTask::dqmBeginRun(r, es);
+	bool changed = false;
+	_hltConfig.init(r, es, "HLT", changed);
+	if (changed) {
+		// Get trigger indices
+		for (auto& it_hltTrain1Name : _hltTrain1Names) {
+			const unsigned int trigIndex(_hltConfig.triggerIndex(it_hltTrain1Name));
+			if (trigIndex >= _hltConfig.size()) {
+				std::cout << "[DigiTask::dqmBeginRun] WARNING : Trigger not found in configuration, " << it_hltTrain1Name << std::endl;
+				continue;
+			}
+			std::cout << "[DigiTask::dqmBeginRun] INFO : Found trigger index " << trigIndex << " for trigger " << it_hltTrain1Name << std::endl;
+			_hltTrain1Indices.push_back(trigIndex);
+		}
+	}
 }
 
 /* virtual */ void DigiTask::endLuminosityBlock(edm::LuminosityBlock const& lb,
