@@ -29,6 +29,8 @@ namespace hcaldqm
 	class Container1D : public Container
 	{
 		public:
+			typedef boost::unordered_map<uint32_t, MonitorElement*> MEMap;
+
 			Container1D();
 			//	Initialize Container
 			//	@folder - folder name where to start saving - root.
@@ -323,10 +325,11 @@ namespace hcaldqm
 			virtual void showOverflowX(bool showOverflow);
 			virtual void showOverflowY(bool showOverflow);
 
+			MEMap* getMEs();
+
 		protected:
 			virtual void customize(MonitorElement*);
 
-			typedef boost::unordered_map<uint32_t, MonitorElement*> MEMap;
 			MEMap									_mes;
 			mapper::HashMapper						_hashmap;
 			quantity::Quantity								*_qx;

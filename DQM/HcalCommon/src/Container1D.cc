@@ -1374,6 +1374,10 @@ namespace hcaldqm
 		_qy->showOverflow(showOverflow);
 	}
 
+	Container1D::MEMap* Container1D::getMEs() {
+		return &_mes;
+	}
+
 }
 
 
