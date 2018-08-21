@@ -30,9 +30,7 @@ class MLTask : public hcaldqm::DQTask
 {
 	public:
 		MLTask(edm::ParameterSet const&);
-		~MLTask() override {
-			_cOccupancy_depth_LS.clear();
-		}
+		~MLTask() override {}
 
 		void bookHistograms(DQMStore::IBooker&,
 			edm::Run const&, edm::EventSetup const&) override;
@@ -40,6 +38,10 @@ class MLTask : public hcaldqm::DQTask
 			edm::EventSetup const&) override;
 		void endLuminosityBlock(edm::LuminosityBlock const&,
 			edm::EventSetup const&) override;
+		void endRun(edm::Run const& run, edm::EventSetup const& setup) override;
+
+		void computeSummaryFlags();
+
 
 	protected:
 		void _process(edm::Event const&, edm::EventSetup const&) override;
@@ -80,7 +82,9 @@ class MLTask : public hcaldqm::DQTask
 
 		/* hcaldqm::Containers */
 		hcaldqm::Container2D _cOccupancy_depth;
-		std::vector<hcaldqm::Container2D*> _cOccupancy_depth_LS;
+		hcaldqm::Container2D _cOccupancyCut_depth;
+		hcaldqm::Container2D _cOccupancy_depth_nLS;
+		hcaldqm::Container2D _cOccupancyCut_depth_nLS;
 
 		//	#events counters
 		MonitorElement *meNumEvents1LS; // to transfer the #events to harvesting

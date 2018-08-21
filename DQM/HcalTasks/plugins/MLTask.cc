@@ -21,10 +21,10 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 	_tokHO = consumes<HODigiCollection>(_tagHO);
 	_tokHF = consumes<QIE10DigiCollection>(_tagHF);
 
-	_cutSumQ_HBHE = ps.getUntrackedParameter<double>("cutSumQ_HBHE", 20);
-	_cutSumQ_HE = ps.getUntrackedParameter<double>("cutSumQ_HE", 20);
-	_cutSumQ_HO = ps.getUntrackedParameter<double>("cutSumQ_HO", 20);
-	_cutSumQ_HF = ps.getUntrackedParameter<double>("cutSumQ_HF", 20);
+	_cutSumQ_HBHE = ps.getUntrackedParameter<double>("cutSumQ_HBHE", 200.);
+	_cutSumQ_HE = ps.getUntrackedParameter<double>("cutSumQ_HE", 40000.);
+	_cutSumQ_HO = ps.getUntrackedParameter<double>("cutSumQ_HO", 100.);
+	_cutSumQ_HF = ps.getUntrackedParameter<double>("cutSumQ_HF", 1000.);
 
 	_vflags.resize(nMLFlag);
 	_vflags[fExampleMLAlgorithm]=hcaldqm::flag::Flag("ExampleMLAlgorithm"); // Bin label on summary plot
@@ -50,21 +50,29 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 	es.get<HcalDbRecord>().get(dbs);
 	_emap = dbs->getHcalMapping();
 
-	for (unsigned int i = 0; i < _nLS; ++i) {
-		_cOccupancy_depth_LS.push_back(new Container2D());
-		_cOccupancy_depth_LS[i]->initialize(_name, "Occupancy_depth_LS", hcaldqm::hashfunctions::fdepth, 
-			new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
-			new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi), 
-			new hcaldqm::quantity::LumiSection(_nLS), 0);
-		_cOccupancy_depth_LS[i]->book(ib, _emap, _subsystem);
-	}
+	_cOccupancy_depth_nLS.initialize(_name, "Occupancy_depth_LS", hcaldqm::hashfunctions::fdepth, 
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi), 
+		new hcaldqm::quantity::LumiSection(_nLS), 0);
+	_cOccupancy_depth_nLS.book(ib, _emap, _subsystem);
+
+	_cOccupancyCut_depth_nLS.initialize(_name, "OccupancyCut_depth_LS", hcaldqm::hashfunctions::fdepth, 
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi), 
+		new hcaldqm::quantity::LumiSection(_nLS), 0);
+	_cOccupancyCut_depth_nLS.book(ib, _emap, _subsystem);
 
 	_cOccupancy_depth.initialize(_name, "Occupancy_depth", hcaldqm::hashfunctions::fdepth, 
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
 		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi), 
 		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN), 0);
-
 	_cOccupancy_depth.book(ib, _emap, _subsystem);
+
+	_cOccupancyCut_depth.initialize(_name, "OccupancyCut_depth", hcaldqm::hashfunctions::fdepth, 
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fieta), 
+		new hcaldqm::quantity::DetectorQuantity(hcaldqm::quantity::fiphi), 
+		new hcaldqm::quantity::ValueQuantity(hcaldqm::quantity::fN), 0);
+	_cOccupancyCut_depth.book(ib, _emap, _subsystem);
 
 
 	//	book Number of Events vs LS histogram
@@ -169,11 +177,15 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 				continue;
 		}
 
-		//CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<HBHEDataFrame>(_dbService, did, *it);
-		//double sumQ = hcaldqm::utilities::sumQDB<HBHEDataFrame>(_dbService, digi_fC, did, *it, 0, it->size()-1);
+		CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<HBHEDataFrame>(_dbService, did, *it);
+		double sumQ = hcaldqm::utilities::sumQDB<HBHEDataFrame>(_dbService, digi_fC, did, *it, 0, it->size()-1);
 
 		_cOccupancy_depth.fill(did);
-		_cOccupancy_depth_LS[_currentLS % _nLS]->fill(did);
+		_cOccupancy_depth_nLS.fill(did);
+		if (sumQ > _cutSumQ_HBHE) {
+			_cOccupancyCut_depth.fill(did);
+			_cOccupancyCut_depth_nLS.fill(did);
+		}
 
 	}
 
@@ -213,10 +225,15 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 			}
 		}
 
-		//CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<QIE11DataFrame>(_dbService, did, digi);
-		//double sumQ = hcaldqm::utilities::sumQDB<QIE11DataFrame>(_dbService, digi_fC, did, digi, 0, digi.samples()-1);
+		CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<QIE11DataFrame>(_dbService, did, digi);
+		double sumQ = hcaldqm::utilities::sumQDB<QIE11DataFrame>(_dbService, digi_fC, did, digi, 0, digi.samples()-1);
+
 		_cOccupancy_depth.fill(did);
-		_cOccupancy_depth_LS[_currentLS % _nLS]->fill(did);
+		_cOccupancy_depth_nLS.fill(did);
+		if (sumQ > _cutSumQ_HE) {
+			_cOccupancyCut_depth.fill(did);
+			_cOccupancyCut_depth_nLS.fill(did);
+		}
 
 	}
 
@@ -253,11 +270,15 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 				continue;
 		}
 
-		//CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<HODataFrame>(_dbService, did, *it);
-		//double sumQ = hcaldqm::utilities::sumQDB<HODataFrame>(_dbService, digi_fC, did, *it, 0, it->size()-1);
-
+		CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<HODataFrame>(_dbService, did, *it);
+		double sumQ = hcaldqm::utilities::sumQDB<HODataFrame>(_dbService, digi_fC, did, *it, 0, it->size()-1);
 		_cOccupancy_depth.fill(did);
-		_cOccupancy_depth_LS[_currentLS % _nLS]->fill(did);
+		_cOccupancy_depth_nLS.fill(did);
+		if (sumQ > _cutSumQ_HO) {
+			_cOccupancyCut_depth.fill(did);
+			_cOccupancyCut_depth_nLS.fill(did);
+		}
+
 	}
 
 	//	reset
@@ -293,11 +314,15 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 				continue;
 		}
 
-		//CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<QIE10DataFrame>(_dbService, did, digi);
-		//double sumQ = hcaldqm::utilities::sumQDB<QIE10DataFrame>(_dbService, digi_fC, did, digi, 0, digi.samples()-1);
+		CaloSamples digi_fC = hcaldqm::utilities::loadADC2fCDB<QIE10DataFrame>(_dbService, did, digi);
+		double sumQ = hcaldqm::utilities::sumQDB<QIE10DataFrame>(_dbService, digi_fC, did, digi, 0, digi.samples()-1);
 		
 		_cOccupancy_depth.fill(did);
-		_cOccupancy_depth_LS[_currentLS % _nLS]->fill(did);
+		_cOccupancy_depth_nLS.fill(did);
+		if (sumQ > _cutSumQ_HF) {
+			_cOccupancyCut_depth.fill(did);
+			_cOccupancyCut_depth_nLS.fill(did);
+		}
 	}
 }
 
@@ -305,28 +330,33 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 	edm::LuminosityBlock const& lb, edm::EventSetup const& es)
 {
 	DQTask::beginLuminosityBlock(lb, es);
-
-	// Reset lumisection % nLS histogram
-	_cOccupancy_depth_LS[lb.luminosityBlock() % _nLS]->reset();
 }
 
 /* virtual */ void MLTask::endLuminosityBlock(edm::LuminosityBlock const& lb,
 	edm::EventSetup const& es)
 {
-	// Make occupancy histograms for last _nLS lumisections, i.e. project out the LS "axis"
-	std::map<unsigned int, TH2F*> hOccupancy_depth_nLS;
-	for (auto& it_histcont : _cOccupancy_depth_LS) {
-		for (auto& it_did_me : *(it_histcont->getMEs())) {
-			HcalDetId this_did(it_did_me.first);
-			unsigned int this_depth = this_did.depth();
-			TH2F* this_hist = it_did_me.second->getTH2F();
-			if (hOccupancy_depth_nLS.find(this_depth) == hOccupancy_depth_nLS.end()) {
-				hOccupancy_depth_nLS[this_depth] = (TH2F*)this_hist->Clone();
-			} else {
-				hOccupancy_depth_nLS[this_depth]->Add(this_hist);
-			}
-		}
+	if (lb.luminosityBlock() % _nLS == 0) {
+		computeSummaryFlags();
 	}
+
+	//	in the end always do the DQTask::endLumi
+	DQTask::endLuminosityBlock(lb, es);
+}
+
+void MLTask::computeSummaryFlags() {
+	// Make maps of depth : TH2F*
+	std::map<unsigned int, const TH2F*> hOccupancy_depth_nLS;
+	for (auto& it_did_me : *(_cOccupancy_depth_nLS.getMEs())) {
+		HcalDetId did(it_did_me.first);
+		hOccupancy_depth_nLS[did.depth()] = it_did_me.second->getTH2F();
+	}
+
+	std::map<unsigned int, const TH2F*> hOccupancyCut_depth_nLS;
+	for (auto& it_did_me : *(_cOccupancyCut_depth_nLS.getMEs())) {
+		HcalDetId did(it_did_me.first);
+		hOccupancyCut_depth_nLS[did.depth()] = it_did_me.second->getTH2F();
+	}
+
 	// INSTRUCTIONS
 	// Pass hOccupancy_depth_nLS to ML algorithm
 	// Or similarly _cOccupancy_depth->getTH2F(), for occupancy for whole run
@@ -373,10 +403,9 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 		_cSummaryvsLS.setBinContent(eid, _currentLS, fSum._state);
 	}
 
-	hOccupancy_depth_nLS.clear();
+	_cOccupancy_depth_nLS.reset();
+	_cOccupancyCut_depth_nLS.reset();
 
-	//	in the end always do the DQTask::endLumi
-	DQTask::endLuminosityBlock(lb, es);
 }
 
 DEFINE_FWK_MODULE(MLTask);
