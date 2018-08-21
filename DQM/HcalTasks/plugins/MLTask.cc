@@ -335,13 +335,21 @@ MLTask::MLTask(edm::ParameterSet const& ps):
 /* virtual */ void MLTask::endLuminosityBlock(edm::LuminosityBlock const& lb,
 	edm::EventSetup const& es)
 {
-	if (lb.luminosityBlock() % _nLS == 0) {
+	if (_currentLS % _nLS == 0) {
 		computeSummaryFlags();
 	}
 
 	//	in the end always do the DQTask::endLumi
 	DQTask::endLuminosityBlock(lb, es);
 }
+
+void MLTask::endRun(edm::Run const& run, edm::EventSetup const& setup) {
+	// Run the summary flags one more time, if we're not on an even multiple.
+	if (_currentLS % _nLS != 0) {
+		computeSummaryFlags();
+	}
+}
+
 
 void MLTask::computeSummaryFlags() {
 	// Make maps of depth : TH2F*
