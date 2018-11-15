@@ -1256,16 +1256,16 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 							if (std::find(_ledCalibrationChannels[HcalForward].begin(), _ledCalibrationChannels[HcalForward].end(), did) != _ledCalibrationChannels[HcalForward].end()) {
 								bool channelLEDSignalPresent = false;
 								for (int i=0; i<digi.samples(); i++) {
-									_LED_ADCvsBX_Subdet.fill(HcalDetId(HcalForward, 16, 1, 1), bx, digi[i].adc());
+									_LED_ADCvsBX_Subdet.fill(HcalDetId(HcalForward, 29, 1, 1), bx, digi[i].adc());
 
 									if (digi[i].adc() > _thresh_led) {
 										channelLEDSignalPresent = true;
 									}
 								}
 								if (channelLEDSignalPresent) {
-									_LED_CUCountvsLS_Subdet.fill(HcalDetId(HcalForward, 16, 1, 1), _currentLS);
+									_LED_CUCountvsLS_Subdet.fill(HcalDetId(HcalForward, 29, 1, 1), _currentLS);
 									if (_ptype == fOnline) { 
-										_LED_CUCountvsLSmod60_Subdet.fill(HcalDetId(HcalForward, 16, 1, 1), _currentLS % 60);
+										_LED_CUCountvsLSmod60_Subdet.fill(HcalDetId(HcalForward, 29, 1, 1), _currentLS % 60);
 									}
 								}
 							}
@@ -1471,7 +1471,7 @@ DigiTask::DigiTask(edm::ParameterSet const& ps):
 		for (std::vector<uint32_t>::const_iterator it=_vhashFEDs.begin();
 				it!=_vhashFEDs.end(); ++it) {
 			HcalElectronicsId eid = HcalElectronicsId(*it);
-			_cCapid_BadvsFEDvsLSmod60.setBinContent(eid, _currentLS % 50, 0);
+			_cCapid_BadvsFEDvsLSmod60.setBinContent(eid, _currentLS % 60, 0);
 		}	
 	}
 }
