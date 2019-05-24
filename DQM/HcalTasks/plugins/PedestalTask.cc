@@ -844,54 +844,29 @@ PedestalTask::PedestalTask(edm::ParameterSet const& ps):
 /* virtual */ void PedestalTask::_process(edm::Event const& e,
 	edm::EventSetup const& es)
 {
-	edm::Handle<HBHEDigiCollection>		chbhe;
 	edm::Handle<HODigiCollection>		cho;
 	edm::Handle<QIE10DigiCollection>		chf;
-	edm::Handle<QIE11DigiCollection>		chep17;
+	edm::Handle<QIE11DigiCollection>		cqie11;
 
-	if (!e.getByToken(_tokHBHE, chbhe))
-		_logger.dqmthrow("Collection HBHEDigiCollection isn't available"
-			+ _tagHBHE.label() + " " + _tagHBHE.instance());
 	if (!e.getByToken(_tokHO, cho))
 		_logger.dqmthrow("Collection HODigiCollection isn't available"
 			+ _tagHO.label() + " " + _tagHO.instance());
 	if (!e.getByToken(_tokHF, chf))
 		_logger.dqmthrow("Collection QIE10DigiCollection isn't available"
 			+ _tagHF.label() + " " + _tagHF.instance());
-	if (!e.getByToken(_tokHEP17, chep17))
+	if (!e.getByToken(_tokHEP17, cqie11))
 		_logger.dqmthrow("Collection QIE11DigiCollection isn't available"
 			+ _tagHE.label() + " " + _tagHE.instance());
 
 	int nHB(0), nHE(0), nHO(0), nHF(0);
-	for (HBHEDigiCollection::const_iterator it=chbhe->begin();
-		it!=chbhe->end(); ++it)
-	{
-		const HBHEDataFrame digi = (const HBHEDataFrame)(*it);
-		HcalDetId did = digi.id();
-		int digiSizeToUse = floor(digi.size()/constants::CAPS_NUM)*
-			constants::CAPS_NUM-1;
-		did.subdet()==HcalBarrel ? nHB++ : nHE++;
 
-		for (int i=0; i<digiSizeToUse; i++)
-		{
-			_cADC_SubdetPM.fill(did, it->sample(i).adc());
-
-			_xPedSum1LS.get(did)+=it->sample(i).adc();
-			_xPedSum21LS.get(did)+=it->sample(i).adc()*it->sample(i).adc();
-			_xPedEntries1LS.get(did)++;
-			
-			_xPedSumTotal.get(did)+=it->sample(i).adc();
-			_xPedSum2Total.get(did)+=it->sample(i).adc()*it->sample(i).adc();
-			_xPedEntriesTotal.get(did)++;
-		}
-	}
-	for (QIE11DigiCollection::const_iterator it=chep17->begin(); it!=chep17->end();
+	for (QIE11DigiCollection::const_iterator it=cqie11->begin(); it!=cqie11->end();
 		++it)
 	{
 		const QIE11DataFrame digi = static_cast<const QIE11DataFrame>(*it);
 		HcalDetId const& did = digi.detid();
 		// Require barrel or endcap. As of 2017, some calibration channels are ending up in this collection.
-		if ((did.subdet() != HcalEndcap) && (did.subdet() != HcalBarrel)) {
+		if ((did.subdet() != HcalBarrel) && (did.subdet() != HcalEndcap)) {
 			continue;
 		}
 		int digiSizeToUse = floor(digi.samples()/constants::CAPS_NUM)*
