@@ -613,60 +613,12 @@ LaserTask::LaserTask(edm::ParameterSet const& ps):
 		}
 	}
 
-	for (HBHEDigiCollection::const_iterator it=chbhe->begin();
-		it!=chbhe->end(); ++it)
-	{
-		const HBHEDataFrame digi = (const HBHEDataFrame)(*it);
-		double sumQ = hcaldqm::utilities::sumQ<HBHEDataFrame>(digi, 2.5, 0, 
-			digi.size()-1);
-		if (sumQ<_lowHBHE)
-			continue;
-		HcalDetId did = digi.id();
-		HcalElectronicsId eid = digi.elecId();
-
-		double aveTS = hcaldqm::utilities::aveTS<HBHEDataFrame>(digi, 2.5, 0,
-			digi.size()-1);
-		_xSignalSum.get(did)+=sumQ;
-		_xSignalSum2.get(did)+=sumQ*sumQ;
-		_xTimingSum.get(did)+=aveTS;
-		_xTimingSum2.get(did)+=aveTS*aveTS;
-		_xEntries.get(did)++;
-
-		for (int i=0; i<digi.size(); i++)
-		{
-			if (_ptype == fLocal) { // hidefed2crate
-				_cShapeCut_FEDSlot.fill(eid, i, 
-					digi.sample(i).nominal_fC()-2.5);
-			}
-			_cADC_SubdetPM.fill(did, digi.sample(i).adc());
-		}
-
-		//	select based on local global
-		double digiTimingSOI = (aveTS - digi.presamples()) * 25.;
-		double deltaTiming = digiTimingSOI - laserMonTiming;
-		_cTiming_DigivsLaserMon_SubdetPM.fill(did, laserMonTiming, digiTimingSOI);
-		_xTimingRefLMSum.get(did) += deltaTiming;
-		_xTimingRefLMSum2.get(did) += deltaTiming * deltaTiming;
-		if (_ptype==fLocal) {
-			int currentEvent = e.eventAuxiliary().id().event();
-			_cTimingvsEvent_SubdetPM.fill(did, currentEvent, aveTS);
-			_cSignalvsEvent_SubdetPM.fill(did, currentEvent, sumQ);
-			_cTimingDiffLS_SubdetPM.fill(did, currentEvent, hcaldqm::utilities::getRBX(did.iphi()), deltaTiming);
-		}
-		else {
-			_cTimingvsLS_SubdetPM.fill(did, _currentLS, aveTS);
-			_cSignalvsLS_SubdetPM.fill(did, _currentLS, sumQ);
-			_cTimingvsBX_SubdetPM.fill(did, bx, aveTS);
-			_cSignalvsBX_SubdetPM.fill(did, bx, sumQ);
-			_cTimingDiffLS_SubdetPM.fill(did, _currentLS, hcaldqm::utilities::getRBX(did.iphi()), deltaTiming);
-		}
-	}
 	for (QIE11DigiCollection::const_iterator it=cHE->begin(); it!=cHE->end();
 		++it)
 	{
 		const QIE11DataFrame digi = static_cast<const QIE11DataFrame>(*it);
 		HcalDetId const& did = digi.detid();
-		if (did.subdet() != HcalEndcap) {
+		if ((did.subdet() != HcalBarrel) && (did.subdet() != HcalEndcap)) {
 			continue;
 		}
 		uint32_t rawid = _ehashmap.lookup(did);

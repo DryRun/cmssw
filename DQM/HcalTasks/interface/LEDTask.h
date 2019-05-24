@@ -44,16 +44,14 @@ class LEDTask : public hcaldqm::DQTask
 		virtual void _dump();
 
 		//	tags and tokens
-		edm::InputTag	_tagHBHE;
-		edm::InputTag	_tagHE;
+		edm::InputTag	_tagQIE11;
 		edm::InputTag	_tagHO;
-		edm::InputTag	_tagHF;
+		edm::InputTag	_tagQIE10;
 		edm::InputTag	_tagTrigger;
 		edm::InputTag	_taguMN;
-		edm::EDGetTokenT<HBHEDigiCollection> _tokHBHE;
-		edm::EDGetTokenT<QIE11DigiCollection> _tokHE;
+		edm::EDGetTokenT<QIE11DigiCollection> _tokQIE11;
 		edm::EDGetTokenT<HODigiCollection> _tokHO;
-		edm::EDGetTokenT<QIE10DigiCollection> _tokHF;
+		edm::EDGetTokenT<QIE10DigiCollection> _tokQIE10;
 		edm::EDGetTokenT<HcalTBTriggerData> _tokTrigger;
 		edm::EDGetTokenT<HcalUMNioDigi> _tokuMN;
 
@@ -65,7 +63,6 @@ class LEDTask : public hcaldqm::DQTask
 		//	Cuts
 		int _nevents;
 		double _lowHBHE;
-		double _lowHE;
 		double _lowHO;
 		double _lowHF;
 
