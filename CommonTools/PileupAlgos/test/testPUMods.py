@@ -19,6 +19,7 @@ process.load('CommonTools/PileupAlgos/softKiller_cfi')
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 process.source = cms.Source("PoolSource",
 	fileNames  = cms.untracked.vstring(
+        #'/store/relval/CMSSW_8_1_0_pre9/RelValZMM_13/MINIAODSIM/PU25ns_81X_mcRun2_asymptotic_v2_hip0p6-v1/10000/766B1D3F-7F50-E611-B235-0025905A6064.root'
         '/store/relval/CMSSW_8_1_0_pre9/RelValZMM_13/MINIAODSIM/PU25ns_81X_mcRun2_asymptotic_v2_hip0p6-v1/10000/766B1D3F-7F50-E611-B235-0025905A6064.root'
 		)
 )

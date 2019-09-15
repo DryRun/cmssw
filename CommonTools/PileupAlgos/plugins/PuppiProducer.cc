@@ -19,8 +19,15 @@
 //Main File
 #include "CommonTools/PileupAlgos/plugins/PuppiProducer.h"
 #include "CommonTools/PileupAlgos/interface/PuppiCandidate.h"
+#include "CommonTools/PileupAlgos/interface/BDTDepthCalc.hh"
+#include "CommonTools/PileupAlgos/interface/MLPDepthCalc.hh"
+#include "CommonTools/PileupAlgos/interface/PKDepthCalc.hh"
+#include <iostream>
+#include "TMVA/PyMethodBase.h"
+#include "TMVA/Tools.h"
+#include <TMath.h>
 
-
+using namespace baconhep;
 // ------------------------------------------------------------------------------------------
 PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   fPuppiDiagnostics = iConfig.getParameter<bool>("puppiDiagnostics");
@@ -29,11 +36,32 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
   fDZCut     = iConfig.getParameter<double>("DeltaZCut");
   fPtMax     = iConfig.getParameter<double>("PtMaxNeutrals");
   fUseExistingWeights     = iConfig.getParameter<bool>("useExistingWeights");
+  std::cout << "Use existing weights?" << fUseExistingWeights << std::endl;
   fUseWeightsNoLep        = iConfig.getParameter<bool>("useWeightsNoLep");
   fClonePackedCands       = iConfig.getParameter<bool>("clonePackedCands");
   fVtxNdofCut = iConfig.getParameter<int>("vtxNdofCut");
   fVtxZCut = iConfig.getParameter<double>("vtxZCut");
   fPuppiContainer = std::unique_ptr<PuppiContainer> ( new PuppiContainer(iConfig) );
+  //std::string lNNFile  = iConfig.getUntrackedParameter<std::string>("NNFileName","CommonTools/PileupAlgos/data/tf_model_May10.pb");
+  std::string lNNFile  = iConfig.getUntrackedParameter<std::string>("NNFileName","CommonTools/PileupAlgos/data/tf_model_pt_gt5_eta25_to_3.pb");
+  std::string cmssw_base_src = getenv("CMSSW_BASE");
+  cmssw_base_src += "/src/";
+  lBDTFile = (cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights_nopt.xml");
+  //lPKFile  = (cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_PyKeras.weights.xml");
+  //lMLPFile  = (cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_MLP.weights.xml");
+  //std::string lBDTFile = iConfig.getUntrackedParameter<std::string>("BDTFileName","CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights.xml");
+  //TMVA::Tools::Instance();
+  //TMVA::PyMethodBase::PyInitialize();
+  //std::string lPKFile  = iConfig.getUntrackedParameter<std::string>("PKFileName","CommonTools/PileupAlgos/data/TMVAClassification_PyKeras.weights.xml"); 
+
+  //fBDTDepthCalc.initialize("BDT", cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights_nopt.xml");
+  //fBDTDepthCalc.initialize("BDT", cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights2530.xml");
+  //fBDTDepthCalc.initialize("BDT", cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights_eta25_pt5.xml");
+  fBDTDepthCalc.initialize("BDT", cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights_Jul31_2.xml");
+  //fBDTDepthCalc.initialize("BDT", cmssw_base_src + "CommonTools/PileupAlgos/data/TMVAClassification_BDT.weights_eta173_pt5.xml");
+  //initBDT();
+  //initPK();
+  //initMLP();
 
   tokenPFCandidates_
     = consumes<CandidateView>(iConfig.getParameter<edm::InputTag>("candName"));
@@ -57,11 +85,32 @@ PuppiProducer::PuppiProducer(const edm::ParameterSet& iConfig) {
     produces<std::vector<double>> ("PuppiAlphasMed");
     produces<std::vector<double>> ("PuppiAlphasRms");
   }
+  fPionDisc = new DepthNNId();
+  fPionDisc->initialize(lNNFile);
+  produces<edm::ValueMap<float>>("PuppiDepth"); 
+  produces<edm::ValueMap<float>>("PuppiOnlyDepth");
+  produces<edm::ValueMap<float>>("PuppiNoDepth");
+  produces<edm::ValueMap<float>>("DepthInference");
+
+  
 }
 // ------------------------------------------------------------------------------------------
 PuppiProducer::~PuppiProducer(){
 }
 // ------------------------------------------------------------------------------------------
+void PuppiProducer::initBDT(){
+  fBDTDepthCalc.initialize("BDT",lBDTFile);
+}
+
+void PuppiProducer::initPK(){
+  fPKDepthCalc.initialize("PyKeras", lPKFile);
+}
+   
+
+void PuppiProducer::initMLP(){
+  fMLPDepthCalc.initialize("MLP", lMLPFile);
+}
+
 void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
   // Get PFCandidate Collection
@@ -80,18 +129,24 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       if (!vtxIter->isFake() && vtxIter->ndof()>=fVtxNdofCut && std::abs(vtxIter->z())<=fVtxZCut)
          npv++;
    }
+  // This is a dummy to access the "translate" method which is a
+  // non-static member function even though it doesn't need to be. 
+  // Will fix in the future. 
+  static const reco::PFCandidate dummySinceTranslateIsNotStatic;
 
   //Fill the reco objects
+  std::vector<double> lDepths;
   fRecoObjCollection.clear();
   fRecoObjCollection.reserve(pfCol->size());
-  for(auto const& aPF : *pfCol) {
+  for(const auto & aPF : *pfCol) {
     RecoObj pReco;
     pReco.pt  = aPF.pt();
     pReco.eta = aPF.eta();
     pReco.phi = aPF.phi();
     pReco.m   = aPF.mass();
-    pReco.rapidity = aPF.rapidity();
-    pReco.charge = aPF.charge(); 
+    pReco.rapidity  = aPF.rapidity();
+    pReco.charge    = aPF.charge(); 
+    pReco.pfType    = dummySinceTranslateIsNotStatic.translatePdgIdToType(aPF.pdgId());
     const reco::Vertex *closestVtx = nullptr;
     double pDZ    = -9999; 
     double pD0    = -9999; 
@@ -101,6 +156,8 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     if(lPack == nullptr ) {
 
       const reco::PFCandidate *pPF = dynamic_cast<const reco::PFCandidate*>(&aPF);
+      pReco.depth     = computeDepthPF(pPF);
+      lDepths.push_back(pReco.depth);
       double curdz = 9999;
       int closestVtxForUnassociateds = -9999;
       const reco::TrackRef aTrackRef = pPF->trackRef();
@@ -160,7 +217,25 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       pD0        = lPack->dxy();
       pReco.dZ      = pDZ;
       pReco.d0      = pD0;
-  
+      //pReco.depth     = computeDepth(lPack);
+      pReco.depth     = computeDepthBDT(lPack);
+      //pReco.depth     = computeDepthMLP(lPack);
+      lDepths.push_back(pReco.depth);
+   
+      //float DepthChi2 = pReco.depth;
+      //float PuppiChi2 = TMath::ChisquareQuantile(lPack->puppiWeight(),1); 
+
+      pReco.chi2Depth = pReco.depth;
+      //std::cout <<"before" << std::endl;
+
+      float pupTemp = lPack->puppiWeight();
+      if (pupTemp >= 0.99999) pupTemp = 1-1e-16;
+      if (pupTemp <= 0.00001) pupTemp = 1e-16;
+      //pReco.chi2Puppi = TMath::ChisquareQuantile(pupTemp,1);
+      //std::cout <<"after" << std::endl;
+      //lPack->setDepthChi2(pReco.depth);
+      //lPack->setPuppiChi2(TMath::ChisquareQuantile(lPack->puppiWeight(),1));
+
       pReco.id = 0; 
       if (std::abs(pReco.charge) == 0){ pReco.id = 0; }
       if (std::abs(pReco.charge) > 0){
@@ -184,8 +259,18 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   fPuppiContainer->setNPV( npv );
 
   std::vector<double> lWeights;
+  std::vector<double> lWeightsPuppi;
+  std::vector<double> lWeightsDepth;
+  std::vector<double> lDepthInference;
+
   std::vector<PuppiCandidate> lCandidates;
   if (!fUseExistingWeights){
+
+
+    lWeightsPuppi = fPuppiContainer->puppiWeightsPuppi();
+    lWeightsDepth = fPuppiContainer->puppiWeightsDepth();
+    lDepthInference = fPuppiContainer->depthInference();
+
     //Compute the weights and get the particles
     lWeights = fPuppiContainer->puppiWeights();
     lCandidates = fPuppiContainer->puppiParticles();
@@ -218,11 +303,20 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   lPupFiller.insert(hPFProduct,lWeights.begin(),lWeights.end());
   lPupFiller.fill();
 
-  // This is a dummy to access the "translate" method which is a
-  // non-static member function even though it doesn't need to be. 
-  // Will fix in the future. 
-  static const reco::PFCandidate dummySinceTranslateIsNotStatic;
+  std::unique_ptr<edm::ValueMap<float> > lPupDepthOut(new edm::ValueMap<float>());
+  edm::ValueMap<float>::Filler  lPupDepthFiller(*lPupDepthOut);
+  lPupDepthFiller.insert(hPFProduct,lWeightsDepth.begin(),lWeightsDepth.end());
+  lPupDepthFiller.fill();
 
+  std::unique_ptr<edm::ValueMap<float> > lPupPuppiOut(new edm::ValueMap<float>());
+  edm::ValueMap<float>::Filler  lPupPuppiFiller(*lPupPuppiOut);
+  lPupPuppiFiller.insert(hPFProduct,lWeightsPuppi.begin(),lWeightsPuppi.end());
+  lPupPuppiFiller.fill();
+
+  std::unique_ptr<edm::ValueMap<float> > lDepthInferenceOut(new edm::ValueMap<float>());
+  edm::ValueMap<float>::Filler  lDepthInferenceFiller(*lDepthInferenceOut);
+  lDepthInferenceFiller.insert(hPFProduct,lDepthInference.begin(),lDepthInference.end());
+  lDepthInferenceFiller.fill();
   // Fill a new PF/Packed Candidate Collection and write out the ValueMap of the new p4s.
   // Since the size of the ValueMap must be equal to the input collection, we need
   // to search the "puppi" particles to find a match for each input. If none is found,
@@ -284,7 +378,10 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::ValueMap<LorentzVector>::Filler  p4PupFiller(*p4PupOut);
   p4PupFiller.insert(hPFProduct,puppiP4s.begin(), puppiP4s.end() );
   p4PupFiller.fill();
-  
+ 
+  iEvent.put(std::move(lDepthInferenceOut), "DepthInference"); 
+  iEvent.put(std::move(lPupDepthOut), "PuppiOnlyDepth");
+  iEvent.put(std::move(lPupPuppiOut), "PuppiNoDepth");
   iEvent.put(std::move(lPupOut));
   iEvent.put(std::move(p4PupOut));
   if (fUseExistingWeights || fClonePackedCands) {
@@ -324,9 +421,142 @@ void PuppiProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     iEvent.put(std::move(theAlphasMed),"PuppiAlphasMed");
     iEvent.put(std::move(theAlphasRms),"PuppiAlphasRms");
   }
-  
+  std::unique_ptr<edm::ValueMap<float> > lDepthOut(new edm::ValueMap<float>());
+  edm::ValueMap<float>::Filler  lDepthFiller(*lDepthOut);
+  lDepthFiller.insert(hPFProduct,lDepths.begin(),lDepths.end());
+  lDepthFiller.fill();
+  iEvent.put(std::move(lDepthOut),"PuppiDepth");
+}
+// ------------------------------------------------------------------------------------------
+double PuppiProducer::computeDepthPK(auto *aPF) {
+  float lDepth[7];
+  //if(aPF->pdgId() != 130) return 1;
+  for(unsigned int i0 = 0; i0 < 7; i0++) lDepth[i0] = aPF->hcalDepthEnergyFraction(i0+1);
+  double d = fPKDepthCalc.mvaValue(aPF->eta(), aPF->phi(), lDepth[0],lDepth[1],lDepth[2],lDepth[3], lDepth[4],lDepth[5],lDepth[6]);
+  //p/(1-p)=d   =>    p=d/(1+d)  converting this to a probability
+  double PUmode = 0.32;  //mode of PU distribution
+  double PUrms  = 0.05;  //rms of PU distribution
+  double pval = (d - PUmode)*std::abs(d - PUmode)/PUrms/PUrms;
+  //double pval = d/(1.+d);
+  std::cout << "depth pval ykeras: " << pval << std::endl;
+  return pval;
 }
 
+double PuppiProducer::computeDepthMLP(auto *aPF) {
+  float lDepth[7];
+  //if(aPF->pdgId() != 130) return 1;
+  for(unsigned int i0 = 0; i0 < 7; i0++) lDepth[i0] = aPF->hcalDepthEnergyFraction(i0+1);
+  double d = fMLPDepthCalc.mvaValue(aPF->eta(), aPF->phi(), lDepth[0],lDepth[1],lDepth[2],lDepth[3], lDepth[4],lDepth[5],lDepth[6]);
+  //p/(1-p)=d   =>    p=d/(1+d)  converting this to a probability
+  //double PUmode = 0.2;  //mode of PU distribution
+  //double PUrms  = 0.2;  //rms of PU distribution
+  //double pval = (d - PUmode)*std::abs(d - PUmode)/PUrms/PUrms;
+
+  //double dCorr = (1. - d) / 2.;
+  //d += dCorr;
+
+  double PUmed = 0.25; 
+  double PUlRMS = 0.075;
+
+  double lChi2Depth = (d - PUmed)*std::abs(d - PUmed)/PUlRMS/PUlRMS;
+  
+  //std::cout << "depth pval: " << pval << std::endl;
+  return lChi2Depth;
+}
+// ------------------------------------------------------------------------------------------
+double PuppiProducer::computeDepthBDT(auto *aPF) {
+  float lDepth[7];
+  //if(aPF->pdgId() != 130) return 1;
+  for(unsigned int i0 = 0; i0 < 7; i0++) lDepth[i0] = aPF->hcalDepthEnergyFraction(i0+1);
+  double d = fBDTDepthCalc.mvaValue(aPF->eta(), aPF->phi(), lDepth[0],lDepth[1],lDepth[2],lDepth[3], lDepth[4],lDepth[5],lDepth[6]);
+  //p/(1-p)=d   =>    p=d/(1+d)  converting this to a probability
+  //double PUmode = 0.2;  //mode of PU distribution
+  //double PUrms  = 0.2;  //rms of PU distribution
+  //double pval = (d - PUmode)*std::abs(d - PUmode)/PUrms/PUrms;
+
+  //double dCorr = (1. - d) / 2.;
+  //d += dCorr;
+
+  //settings for PU without pT in training
+  //double PUmed = -0.2; 
+  //double PUlRMS = 0.2;
+  //settings for PU with pT in training
+  double PUmed =-0.40; 
+  double PUlRMS=0.20;
+
+  double lChi2Depth = (d - PUmed)*std::abs(d - PUmed)/PUlRMS/PUlRMS;
+  //if ( (lDepth[0] != 0) || (lDepth[1] != 0)|| (lDepth[2] != 0) ){
+  //std::cout << aPF->eta() << " -- " << aPF->phi() << " -- " << lDepth[0] << " -- " << lDepth[1] << " -- " << lDepth[2] << " -- " << lDepth[3] << " -- " << lDepth[4] << " -- " << lDepth[5] << " -- " << lDepth[6] << "\t" << " --> " << d << std::endl;
+  //}  
+  //std::cout << "depth pval: " << pval << std::endl;
+  //return lChi2Depth;
+  return d; 
+}
+
+
+double PuppiProducer::computeDepth(auto *aPF) { 
+  float lDepth[7];
+  //std::cout << "XXX====> " << aPF->pdgId() << " -- " << aPF->hcalFraction() << " -- " << aPF->eta() << " -- " << aPF->pt() << std::endl;
+  //if(aPF->pdgId() != 130) return 1;
+
+  for(unsigned int i0 = 0; i0 < 7; i0++) {lDepth[i0] = aPF->hcalDepthEnergyFraction(i0+1) ; };
+
+  //Dummy for now
+  //return lDepth[1]/(lDepth[0]+lDepth[1]);
+  fPionDisc->fEta    = aPF->eta();
+  fPionDisc->fPhi    = aPF->phi();
+  fPionDisc->fDepth1 = lDepth[0];
+  fPionDisc->fDepth2 = lDepth[1];
+  fPionDisc->fDepth3 = lDepth[2];
+  fPionDisc->fDepth4 = lDepth[3];
+  fPionDisc->fDepth5 = lDepth[4];
+  fPionDisc->fDepth6 = lDepth[5];
+  fPionDisc->fDepth7 = lDepth[6];
+  fPionDisc->SetNNVectorVar();
+  double d = fPionDisc->EvaluateNN();
+  //p/(1-p)=d   =>    p=d/(1+d)  converting this to a probability
+  double PUmode = 0.7;  //mode of PU distribution
+  double PUrms  = 0.4;  //rms of PU distribution
+  double pval = (d - PUmode)*std::abs(d - PUmode)/PUrms/PUrms;
+  //double pval = d/(1.+d);
+  //std::cout << "depth pval: " << pval << std::endl;
+
+  //if (d > PUmode)
+  //  pval = 99999.;
+  //if (d <= PUmode) 
+  //  pval = -99999.;
+  if ( (lDepth[0] != 0) || (lDepth[1] != 0)|| (lDepth[2] != 0) ){
+  std::cout << aPF->eta() << " -- " << aPF->phi() << " -- " << lDepth[0] << " -- " << lDepth[1] << " -- " << lDepth[2] << " -- " << lDepth[3] << " -- " << lDepth[4] << " -- " << lDepth[5] << " -- " << lDepth[6] << "\t" << " --> " << d << std::endl;
+  }
+  return d;
+}
+
+// ------------------------------------------------------------------------------------------
+double PuppiProducer::computeDepthPF(auto *aPF) { 
+
+  std::cout << "Computing depth on PF candidates" << std::endl;
+  float lDepth[7];
+  if(aPF->pdgId() != 130) return 1;
+  for(unsigned int i0 = 0; i0 < 7; i0++) lDepth[i0] = aPF->hcalDepthEnergyFraction(i0+1);
+  //Dummy for now
+  //return lDepth[1]/(lDepth[0]+lDepth[1]);
+  fPionDisc->fDepth1 = lDepth[0];
+  fPionDisc->fDepth2 = lDepth[1];
+  fPionDisc->fDepth3 = lDepth[2];
+  fPionDisc->fDepth4 = lDepth[3];
+  fPionDisc->fDepth5 = lDepth[4];
+  fPionDisc->fDepth6 = lDepth[5];
+  fPionDisc->fDepth7 = lDepth[6];
+  fPionDisc->fEcal   = aPF->ecalEnergy()/(aPF->hcalEnergy()+aPF->ecalEnergy());
+  fPionDisc->fEta    = aPF->eta();
+  fPionDisc->fPhi    = aPF->phi();
+  fPionDisc->SetNNVectorVar();
+  double d = fPionDisc->EvaluateNN();
+
+  //p/(1-p)=d   =>    p=d/(1+d)  converting this to a probability
+  double pval = d/(1.+d);
+  return pval;
+}
 // ------------------------------------------------------------------------------------------
 void PuppiProducer::beginJob() {
 }

@@ -14,6 +14,9 @@ public:
 
     std::vector<PuppiCandidate> const & pfParticles() const { return fPFParticles; }
     std::vector<PuppiCandidate> const & pvParticles() const { return fChargedPV; }
+    std::vector<double> const & depthInference();
+    std::vector<double> const & puppiWeightsPuppi();
+    std::vector<double> const & puppiWeightsDepth();
     std::vector<double> const & puppiWeights();
     const std::vector<double> & puppiRawAlphas(){ return fRawAlphas; }
     const std::vector<double> & puppiAlphas(){ return fVals; }
@@ -30,6 +33,7 @@ protected:
     void    getRMSAvg    (int iOpt,std::vector<PuppiCandidate> const &iConstits,std::vector<PuppiCandidate> const &iParticles,std::vector<PuppiCandidate> const &iChargeParticles);
     void    getRawAlphas    (int iOpt,std::vector<PuppiCandidate> const &iConstits,std::vector<PuppiCandidate> const &iParticles,std::vector<PuppiCandidate> const &iChargeParticles);
     double  getChi2FromdZ(double iDZ);
+    double  getChi2FromDepth(double iDepth);
     int     getPuppiId   ( float iPt, float iEta);
     double  var_within_R (int iId, const std::vector<PuppiCandidate> & particles, const PuppiCandidate& centre, const double R);
     
@@ -39,6 +43,7 @@ protected:
     std::vector<PuppiCandidate> fChargedPV;
     std::vector<PuppiCandidate> fPupParticles;
     std::vector<double>    fWeights;
+    std::vector<double>    fInference;
     std::vector<double>    fVals;
     std::vector<double>    fRawAlphas;
     std::vector<double>    fAlphaMed;

@@ -17,7 +17,12 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "CommonTools/PileupAlgos/interface/PuppiContainer.h"
+#include "CommonTools/PileupAlgos/interface/DepthNNId.h"
+#include "CommonTools/PileupAlgos/interface/BDTDepthCalc.hh"
+#include "CommonTools/PileupAlgos/interface/PKDepthCalc.hh"
+#include "CommonTools/PileupAlgos/interface/MLPDepthCalc.hh"
 
+using namespace baconhep;
 // ------------------------------------------------------------------------------------------
 class PuppiProducer : public edm::stream::EDProducer<> {
 
@@ -38,8 +43,15 @@ public:
 private:
 	virtual void beginJob() ;
 	void produce(edm::Event&, const edm::EventSetup&) override;
-	virtual void endJob() ;
-      
+	double computeDepth(auto *aPF);
+	double computeDepthBDT(auto *aPF);
+	double computeDepthMLP(auto *aPF);
+	double computeDepthPK(auto *aPF);
+	double computeDepthPF(auto *aPF);
+        virtual void endJob() ;
+	void initBDT();
+	void initMLP();
+        void initPK(); 
 	edm::EDGetTokenT< CandidateView > tokenPFCandidates_;
 	edm::EDGetTokenT< VertexCollection > tokenVertices_;
 	std::string     fPuppiName;
@@ -59,5 +71,21 @@ private:
 	std::vector<RecoObj> fRecoObjCollection;
         std::unique_ptr< PFOutputCollection >          fPuppiCandidates;
 	std::unique_ptr< PackedOutputCollection >      fPackedPuppiCandidates;
+        DepthNNId* fPionDisc;
+
+        BDTDepthCalc    fBDTDepthCalc;
+        PKDepthCalc     fPKDepthCalc;
+        MLPDepthCalc    fMLPDepthCalc;
+        std::string lBDTFile;
+        std::string lPKFile;
+        std::string lMLPFile;
+
+//protected:
+//        BDTDepthCalc    fBDTDepthCalc;
+//        PKDepthCalc     fPKDepthCalc; 
+//        MLPDepthCalc    fMLPDepthCalc;
+//        std::string lBDTFile;
+//        std::string lPKFile;
+//        std::string lMLPFile;
 };
 #endif
