@@ -41,6 +41,9 @@ void PuppiContainer::initialize(const std::vector<RecoObj> &iRecoObjects) {
     fRecoParticles = &iRecoObjects;
     fRecoToPup.clear();
     fRecoToPup.reserve(fRecoParticles->size());
+
+    fInference.resize(0);
+
     for (auto const& rParticle : *fRecoParticles){
         PuppiCandidate curPseudoJet;
         // float nom = sqrt((rParticle.m)*(rParticle.m) + (rParticle.pt)*(rParticle.pt)*(cosh(rParticle.eta))*(cosh(rParticle.eta))) + (rParticle.pt)*sinh(rParticle.eta);//hacked
@@ -209,9 +212,60 @@ double PuppiContainer::getChi2FromdZ(double iDZ) {
     lChi2PU*=lChi2PU;
     return lChi2PU;
 }
+double PuppiContainer::getChi2FromDepth(double iDepth) {
+    //We need to obtain prob of PU + (1-Prob of LV)
+    //At the moment we assume this is translated to a probability its PV
+    //std::cout << "chi2 depth: " << iDepth << std::endl;
+    double lProbLV = iDepth;
+    double lProbPU = 1-lProbLV;
+    //std::cout << "Prob LV: " << lProbLV << "\tProb PU: " << lProbPU << std::endl;
+    if(lProbPU <= 0) lProbPU = 1e-2;   //Quick Trick to through out infs
+    if(lProbPU >= 1) lProbPU = 1-1e-2; //Ditto
+
+    double PUrms = 0.1;  
+    double PUmed = -0.2;
+    //if((lProbLV < .2) or (lProbLV > .8)) std::cout << "Prob LV: " << lProbLV << "\tProb PU: " << lProbPU << std::endl;
+    //double lChi2PU = TMath::ChisquareQuantile(lProbPU,1);
+    //lChi2PU*=lChi2PU;
+    //std::cout << "getChi2FromDepth: " << lChi2PU << std::endl;
+    double chi2 = (iDepth - PUmed)*std::abs(iDepth - PUmed) / PUrms / PUrms; 
+
+    return chi2;
+    //return lChi2PU;
+}
+
+std::vector<double> const & PuppiContainer::depthInference() {
+    int lNParticles    = fRecoParticles->size();
+    fInference.clear();
+    fInference.reserve(lNParticles);
+    for(int i0 = 0; i0 < lNParticles; i0++){
+       const auto& rParticle = (*fRecoParticles)[i0];
+       if(fUseExp){
+          double inference = rParticle.depth;
+          if(rParticle.pfType == 0) inference = -1;
+          if(rParticle.pfType == 2) inference = -1;
+          if(rParticle.pfType == 3) inference = -1;
+          if(rParticle.pfType == 4) inference = -1;
+          if(rParticle.pfType == 6) inference = -1;
+          if(rParticle.pfType == 7) inference = -1;
+          if(rParticle.pfType == 8) inference = -1;
+
+          if(rParticle.pt < 5) inference = -1;
+          if(std::abs(rParticle.eta) < 2.5) inference = -1;
+          if(std::abs(rParticle.eta) > 3.0) inference = -1;
+          fInference.push_back(inference);
+       }
+       else{ 
+	  fInference.push_back(-10.);
+       }
+    }
+
+    return fInference;
+}
 std::vector<double> const & PuppiContainer::puppiWeights() {
     int lNParticles    = fRecoParticles->size();
 
+    //std::cout << "Getting puppi weights" << std::endl;
     fPupParticles .clear();
     fPupParticles.reserve(lNParticles);
     fWeights      .clear();
@@ -237,6 +291,7 @@ std::vector<double> const & PuppiContainer::puppiWeights() {
         //Get the Puppi Id and if ill defined move on
         const auto& rParticle = (*fRecoParticles)[i0];
         int  pPupId   = getPuppiId(rParticle.pt,rParticle.eta);
+        //std::cout << "puppiID :" <<pPupId << std::endl;
         if(pPupId == -1) {
             fWeights .push_back(pWeight);
             fAlphaMed.push_back(-10);
@@ -250,15 +305,36 @@ std::vector<double> const & PuppiContainer::puppiWeights() {
         double pChi2   = 0;
         if(fUseExp){
             //Compute an Experimental Puppi Weight with delta Z info (very simple example)
-            pChi2 = getChi2FromdZ(rParticle.dZ);
-            //Now make sure Neutrals are not set
-            if(rParticle.pfType > 3) pChi2 = 0;
+            //pChi2 = getChi2FromdZ(rParticle.dZ);
+            //std::cout << rParticle.depth << std::endl;
+	    pChi2 = getChi2FromDepth(rParticle.depth);
+            //Apply this only to neutral hadrons
+            //std::cout << "Expt chi2: " << pChi2 << std::endl;
+            if(rParticle.pfType == 0) pChi2 = 0;
+            if(rParticle.pfType == 2) pChi2 = 0;
+            if(rParticle.pfType == 3) pChi2 = 0;
+            if(rParticle.pfType == 4) pChi2 = 0;
+            if(rParticle.pfType == 6) pChi2 = 0;
+            if(rParticle.pfType == 7) pChi2 = 0;
+            if(rParticle.pfType == 8) pChi2 = 0;
+
+            if(rParticle.pt < 5) pChi2 = 0;
+            if(std::abs(rParticle.eta) < 2.5) pChi2 = 0;
+            if(std::abs(rParticle.eta) > 3.0) pChi2 = 0;
         }
+
+        //pChi2 = 0;
+        //std::cout << "pChi2: " << pChi2 << std::endl;
         //Fill and compute the PuppiWeight
         int lNAlgos = fPuppiAlgo[pPupId].numAlgos();
-        for(int i1 = 0; i1 < lNAlgos; i1++) pVals.push_back(fVals[lNParticles*i1+i0]);
+        //std::cout << "# algos :" << lNAlgos;
+        for(int i1 = 0; i1 < lNAlgos; i1++){ pVals.push_back(fVals[lNParticles*i1+i0]); }
+	pWeight = fPuppiAlgo[pPupId].compute(pVals,pChi2);
+        //pWeight = fPuppiAlgo[pPupId].compute(pVals,pChi2);
+        //double nWeight = fPuppiAlgo[pPupId].compute(pVals,0); 
 
-        pWeight = fPuppiAlgo[pPupId].compute(pVals,pChi2);
+        //if (pWeight != nWeight) { std::cout << "PUPPI: " << nWeight << "\tPUPPI+Depth: " << pWeight << std::endl; }
+
         //Apply the CHS weights
         if(rParticle.id == 1 && fApplyCHS ) pWeight = 1;
         if(rParticle.id == 2 && fApplyCHS ) pWeight = 0;
@@ -291,4 +367,194 @@ std::vector<double> const & PuppiContainer::puppiWeights() {
     return fWeights;
 }
 
+std::vector<double> const & PuppiContainer::puppiWeightsDepth() {
+    int lNParticles    = fRecoParticles->size();
 
+    //std::cout << "Getting puppi weights" << std::endl;
+    fPupParticles .clear();
+    fPupParticles.reserve(lNParticles);
+    fWeights      .clear();
+    fWeights.reserve(lNParticles);
+    fVals         .clear();
+    fVals.reserve(lNParticles);
+    for(int i0 = 0; i0 < fNAlgos; i0++) fPuppiAlgo[i0].reset();
+    
+    int lNMaxAlgo = 1;
+    for(int i0 = 0; i0 < fNAlgos; i0++) lNMaxAlgo = std::max(fPuppiAlgo[i0].numAlgos(),lNMaxAlgo);
+    //Run through all compute mean and RMS
+    for(int i0 = 0; i0 < lNMaxAlgo; i0++) {
+        getRMSAvg(i0,fPFParticles,fPFParticles,fChargedPV);
+    }
+    if (fPuppiDiagnostics) getRawAlphas(0,fPFParticles,fPFParticles,fChargedPV);
+
+    std::vector<double> pVals;
+    pVals.reserve(lNParticles);
+    for(int i0 = 0; i0 < lNParticles; i0++) {
+        //Refresh
+        pVals.clear();
+        double pWeight = 1;
+        //Get the Puppi Id and if ill defined move on
+        const auto& rParticle = (*fRecoParticles)[i0];
+        int  pPupId   = getPuppiId(rParticle.pt,rParticle.eta);
+        //std::cout << "puppiID :" <<pPupId << std::endl;
+        if(pPupId == -1) {
+            fWeights .push_back(pWeight);
+            fAlphaMed.push_back(-10);
+            fAlphaRMS.push_back(-10);
+            fRecoToPup.push_back(-1);
+            continue;
+        } else {
+          fRecoToPup.push_back(fPupParticles.size());//watch out: there should be no skips after this
+        }
+        // fill the p-values
+        double pChi2   = 0;
+        if(fUseExp){
+            //Compute an Experimental Puppi Weight with delta Z info (very simple example)
+            //pChi2 = getChi2FromdZ(rParticle.dZ);
+            //std::cout << rParticle.depth << std::endl;
+	    pChi2 = getChi2FromDepth(rParticle.depth);
+            //Apply this only to neutral hadrons
+            //if(rParticle.pfType != 5 && rParticle.pfType != 1) pChi2 = 0;
+	    if(rParticle.pfType == 0) pChi2 = 0;
+	    if(rParticle.pfType == 2) pChi2 = 0;
+	    if(rParticle.pfType == 3) pChi2 = 0;
+	    if(rParticle.pfType == 4) pChi2 = 0;
+	    if(rParticle.pfType == 6) pChi2 = 0;
+	    if(rParticle.pfType == 7) pChi2 = 0;
+	    if(rParticle.pfType == 8) pChi2 = 0;
+
+            if(rParticle.pt < 5) pChi2 = 0; 
+            if(std::abs(rParticle.eta) < 1.7) pChi2 = 0;
+            if(std::abs(rParticle.eta) > 3.0) pChi2 = 0;
+            //std::cout << "Expt chi2: " << pChi2 << std::endl;
+        }
+
+        //pChi2 = 0;
+        //std::cout << "pChi2: " << pChi2 << std::endl;
+        //Fill and compute the PuppiWeight
+        int lNAlgos = fPuppiAlgo[pPupId].numAlgos();
+        //std::cout << "# algos :" << lNAlgos;
+        for(int i1 = 0; i1 < lNAlgos; i1++){ pVals.push_back(fVals[lNParticles*i1+i0]); }
+
+        pWeight = ROOT::Math::chisquared_cdf(pChi2,1);
+        //pWeight = fPuppiAlgo[pPupId].compute(pVals,pChi2);
+        //double nWeight = fPuppiAlgo[pPupId].compute(pVals,0); 
+
+        //if (pWeight != nWeight) { std::cout << "PUPPI: " << nWeight << "\tPUPPI+Depth: " << pWeight << std::endl; }
+
+        //Apply the CHS weights
+        if(rParticle.id == 1 && fApplyCHS ) pWeight = 1;
+        if(rParticle.id == 2 && fApplyCHS ) pWeight = 0;
+        //Basic Weight Checks
+        if( ! edm::isFinite(pWeight)) {
+            pWeight = 0.0;
+            LogDebug("PuppiWeightError") << "====> Weight is nan : " << pWeight << " : pt " << rParticle.pt << " -- eta : " << rParticle.eta << " -- Value" << fVals[i0] << " -- id :  " << rParticle.id << " --  NAlgos: " << lNAlgos << std::endl;
+        }
+        //Basic Cuts
+        if(pWeight*fPFParticles[i0].pt()   < fPuppiAlgo[pPupId].neutralPt(fNPV) && rParticle.id == 0 ) pWeight = 0;  //threshold cut on the neutral Pt
+        if((fPtMax>0) && (rParticle.id == 0)) pWeight=min(max(pWeight,fPFParticles[i0].pt()/fPtMax),1.);
+        if(pWeight                         < fPuppiWeightCut) pWeight = 0;  //==> Elminate the low Weight stuff
+        if(fInvert) pWeight = 1.-pWeight;
+        //std::cout << "rParticle.pt = " <<  rParticle.pt << ", rParticle.charge = " << rParticle.charge << ", rParticle.id = " << rParticle.id << ", weight = " << pWeight << std::endl;
+
+        fWeights .push_back(pWeight);
+        fAlphaMed.push_back(fPuppiAlgo[pPupId].median());
+        fAlphaRMS.push_back(fPuppiAlgo[pPupId].rms());        
+        //Now get rid of the thrown out weights for the particle collection
+
+        // leave these lines in, in case want to move eventually to having no 1-to-1 correspondence between puppi and pf cands
+        // if( std::abs(pWeight) < std::numeric_limits<double>::denorm_min() ) continue; // this line seems not to work like it's supposed to...
+        // if(std::abs(pWeight) <= 0. ) continue; 
+        
+        //Produce
+        PuppiCandidate curjet( pWeight*fPFParticles[i0].px(), pWeight*fPFParticles[i0].py(), pWeight*fPFParticles[i0].pz(), pWeight*fPFParticles[i0].e() );
+        curjet.set_user_index(i0);
+        fPupParticles.push_back(curjet);
+    }
+    return fWeights;
+}
+std::vector<double> const & PuppiContainer::puppiWeightsPuppi() {
+    int lNParticles    = fRecoParticles->size();
+
+    //std::cout << "Getting puppi weights" << std::endl;
+    fPupParticles .clear();
+    fPupParticles.reserve(lNParticles);
+    fWeights      .clear();
+    fWeights.reserve(lNParticles);
+    fVals         .clear();
+    fVals.reserve(lNParticles);
+    for(int i0 = 0; i0 < fNAlgos; i0++) fPuppiAlgo[i0].reset();
+    
+    int lNMaxAlgo = 1;
+    for(int i0 = 0; i0 < fNAlgos; i0++) lNMaxAlgo = std::max(fPuppiAlgo[i0].numAlgos(),lNMaxAlgo);
+    //Run through all compute mean and RMS
+    for(int i0 = 0; i0 < lNMaxAlgo; i0++) {
+        getRMSAvg(i0,fPFParticles,fPFParticles,fChargedPV);
+    }
+    if (fPuppiDiagnostics) getRawAlphas(0,fPFParticles,fPFParticles,fChargedPV);
+
+    std::vector<double> pVals;
+    pVals.reserve(lNParticles);
+    for(int i0 = 0; i0 < lNParticles; i0++) {
+        //Refresh
+        pVals.clear();
+        double pWeight = 1;
+        //Get the Puppi Id and if ill defined move on
+        const auto& rParticle = (*fRecoParticles)[i0];
+        int  pPupId   = getPuppiId(rParticle.pt,rParticle.eta);
+        //std::cout << "puppiID :" <<pPupId << std::endl;
+        if(pPupId == -1) {
+            fWeights .push_back(pWeight);
+            fAlphaMed.push_back(-10);
+            fAlphaRMS.push_back(-10);
+            fRecoToPup.push_back(-1);
+            continue;
+        } else {
+          fRecoToPup.push_back(fPupParticles.size());//watch out: there should be no skips after this
+        }
+        // fill the p-values
+        //double pChi2   = 0;
+
+        //pChi2 = 0;
+        //std::cout << "pChi2: " << pChi2 << std::endl;
+        //Fill and compute the PuppiWeight
+        int lNAlgos = fPuppiAlgo[pPupId].numAlgos();
+        //std::cout << "# algos :" << lNAlgos;
+        for(int i1 = 0; i1 < lNAlgos; i1++){ pVals.push_back(fVals[lNParticles*i1+i0]); }
+
+        pWeight = fPuppiAlgo[pPupId].compute(pVals,0.);
+        //double nWeight = fPuppiAlgo[pPupId].compute(pVals,0); 
+
+        //if (pWeight != nWeight) { std::cout << "PUPPI: " << nWeight << "\tPUPPI+Depth: " << pWeight << std::endl; }
+
+        //Apply the CHS weights
+        if(rParticle.id == 1 && fApplyCHS ) pWeight = 1;
+        if(rParticle.id == 2 && fApplyCHS ) pWeight = 0;
+        //Basic Weight Checks
+        if( ! edm::isFinite(pWeight)) {
+            pWeight = 0.0;
+            LogDebug("PuppiWeightError") << "====> Weight is nan : " << pWeight << " : pt " << rParticle.pt << " -- eta : " << rParticle.eta << " -- Value" << fVals[i0] << " -- id :  " << rParticle.id << " --  NAlgos: " << lNAlgos << std::endl;
+        }
+        //Basic Cuts
+        if(pWeight*fPFParticles[i0].pt()   < fPuppiAlgo[pPupId].neutralPt(fNPV) && rParticle.id == 0 ) pWeight = 0;  //threshold cut on the neutral Pt
+        if((fPtMax>0) && (rParticle.id == 0)) pWeight=min(max(pWeight,fPFParticles[i0].pt()/fPtMax),1.);
+        if(pWeight                         < fPuppiWeightCut) pWeight = 0;  //==> Elminate the low Weight stuff
+        if(fInvert) pWeight = 1.-pWeight;
+        //std::cout << "rParticle.pt = " <<  rParticle.pt << ", rParticle.charge = " << rParticle.charge << ", rParticle.id = " << rParticle.id << ", weight = " << pWeight << std::endl;
+
+        fWeights .push_back(pWeight);
+        fAlphaMed.push_back(fPuppiAlgo[pPupId].median());
+        fAlphaRMS.push_back(fPuppiAlgo[pPupId].rms());        
+        //Now get rid of the thrown out weights for the particle collection
+
+        // leave these lines in, in case want to move eventually to having no 1-to-1 correspondence between puppi and pf cands
+        // if( std::abs(pWeight) < std::numeric_limits<double>::denorm_min() ) continue; // this line seems not to work like it's supposed to...
+        // if(std::abs(pWeight) <= 0. ) continue; 
+        
+        //Produce
+        PuppiCandidate curjet( pWeight*fPFParticles[i0].px(), pWeight*fPFParticles[i0].py(), pWeight*fPFParticles[i0].pz(), pWeight*fPFParticles[i0].e() );
+        curjet.set_user_index(i0);
+        fPupParticles.push_back(curjet);
+    }
+    return fWeights;
+}

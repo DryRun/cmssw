@@ -5,6 +5,7 @@ class RecoObj
 {
 public:
       RecoObj():
+        chi2Depth(0), chi2Puppi(0),
 	pt(0), eta(0), phi(0), m(0),
 	id(0),pfType(-1),vtxId(-1),
 	trkChi2(0),vtxChi2(0),
@@ -14,6 +15,7 @@ public:
     {}
     ~RecoObj(){}
     
+    float         chi2Depth, chi2Puppi; //experimental
     float         pt, eta, phi, m, rapidity;  // kinematics
     int           id;
     int           pfType;

@@ -206,10 +206,13 @@ double PuppiAlgo::compute(std::vector<double> const &iVals,double iChi2) const {
         lVal += (pVal-cur_Med)*(fabs(pVal-cur_Med))/cur_RMS/cur_RMS;
         lNDOF++;
         if(i0 == 0 && iChi2 != 0) lNDOF++;      //Add external Chi2 to first element
-        if(i0 == 0 && iChi2 != 0) lVal+=iChi2;  //Add external Chi2 to first element
+
+        if(i0 == 0 && iChi2 != 0) lVal += iChi2;  //Add external Chi2 to first element
     }
     //Top it off with the last calc
     lPVal *= ROOT::Math::chisquared_cdf(lVal,lNDOF);
     return lPVal;
 
 }
+
+

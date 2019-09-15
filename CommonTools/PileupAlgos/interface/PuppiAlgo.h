@@ -17,6 +17,7 @@ public:
   void   computeMedRMS(const unsigned int &iAlgo,const double &iPVFrac);
   //Get the Weight
   double compute(std::vector<double> const &iVals,double iChi2) const;
+
   const std::vector<float> & alphas(){ return fPups; }
   //Helpers
   inline int    etaBins() const {return fEtaMin.size(); }

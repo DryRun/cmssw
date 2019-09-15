@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<MethodSetup Method="PyKeras::PyKeras">
+  <GeneralInfo>
+    <Info name="TMVA Release" value="4.2.1 [262657]"/>
+    <Info name="ROOT Release" value="6.12/07 [396295]"/>
+    <Info name="Creator" value="jkrupa"/>
+    <Info name="Date" value="Mon Apr  8 11:46:39 2019"/>
+    <Info name="Host" value="Linux cmsbuild87.cern.ch 2.6.32-696.30.1.el6.x86_64 #1 SMP Tue May 22 06:09:36 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux"/>
+    <Info name="Dir" value="/uscms_data/d3/jkrupa/pf_studies/CMSSW_10_5_0_pre2/src/CommonTools/PileupAlgos/data"/>
+    <Info name="Training events" value="619976"/>
+    <Info name="TrainingTime" value="1.03606058e+02"/>
+    <Info name="AnalysisType" value="Classification"/>
+  </GeneralInfo>
+  <Options>
+    <Option name="V" modified="Yes">False</Option>
+    <Option name="VerbosityLevel" modified="No">Default</Option>
+    <Option name="VarTransform" modified="No">None</Option>
+    <Option name="H" modified="Yes">True</Option>
+    <Option name="CreateMVAPdfs" modified="No">False</Option>
+    <Option name="IgnoreNegWeightsInTraining" modified="No">False</Option>
+    <Option name="FilenameModel" modified="Yes">/uscms_data/d3/jkrupa/pf_studies/CMSSW_10_5_0_pre2/src/CommonTools/PileupAlgos/data/model.h5</Option>
+    <Option name="FilenameTrainedModel" modified="No">/uscms_data/d3/jkrupa/pf_studies/CMSSW_10_5_0_pre2/src/CommonTools/PileupAlgos/data/TrainedModel_PyKeras.h5</Option>
+    <Option name="BatchSize" modified="Yes">500</Option>
+    <Option name="NumEpochs" modified="Yes">20</Option>
+    <Option name="Verbose" modified="No">1</Option>
+    <Option name="ContinueTraining" modified="No">False</Option>
+    <Option name="SaveBestOnly" modified="No">True</Option>
+    <Option name="TriesEarlyStopping" modified="No">-1</Option>
+    <Option name="LearningRateSchedule" modified="No"/>
+  </Options>
+  <Variables NVar="9">
+    <Variable VarIndex="0" Expression="eta" Label="eta" Title="eta" Unit="" Internal="eta" Type="F" Min="-2.99948406e+00" Max="2.99918485e+00"/>
+    <Variable VarIndex="1" Expression="phi" Label="phi" Title="phi" Unit="" Internal="phi" Type="F" Min="-3.14157081e+00" Max="3.14158678e+00"/>
+    <Variable VarIndex="2" Expression="depthFrac0" Label="depthFrac0" Title="depthFrac0" Unit="" Internal="depthFrac0" Type="F" Min="0.00000000e+00" Max="1.00000000e+00"/>
+    <Variable VarIndex="3" Expression="depthFrac1" Label="depthFrac1" Title="depthFrac1" Unit="" Internal="depthFrac1" Type="F" Min="0.00000000e+00" Max="1.00000000e+00"/>
+    <Variable VarIndex="4" Expression="depthFrac2" Label="depthFrac2" Title="depthFrac2" Unit="" Internal="depthFrac2" Type="F" Min="0.00000000e+00" Max="1.00000000e+00"/>
+    <Variable VarIndex="5" Expression="depthFrac3" Label="depthFrac3" Title="depthFrac3" Unit="" Internal="depthFrac3" Type="F" Min="0.00000000e+00" Max="1.00000000e+00"/>
+    <Variable VarIndex="6" Expression="depthFrac4" Label="depthFrac4" Title="depthFrac4" Unit="" Internal="depthFrac4" Type="F" Min="0.00000000e+00" Max="9.50231373e-01"/>
+    <Variable VarIndex="7" Expression="depthFrac5" Label="depthFrac5" Title="depthFrac5" Unit="" Internal="depthFrac5" Type="F" Min="0.00000000e+00" Max="9.68391836e-01"/>
+    <Variable VarIndex="8" Expression="depthFrac6" Label="depthFrac6" Title="depthFrac6" Unit="" Internal="depthFrac6" Type="F" Min="0.00000000e+00" Max="9.38061118e-01"/>
+  </Variables>
+  <Spectators NSpec="0"/>
+  <Classes NClass="2">
+    <Class Name="Signal" Index="0"/>
+    <Class Name="Background" Index="1"/>
+  </Classes>
+  <Transformations NTransformations="0"/>
+  <MVAPdfs/>
+</MethodSetup>

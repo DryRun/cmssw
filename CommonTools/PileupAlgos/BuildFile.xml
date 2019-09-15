@@ -2,9 +2,16 @@
 <use   name="DataFormats/ParticleFlowCandidate"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="root"/>
-
+<use   name="tensorflow-cc"/>
+<use   name="PhysicsTools/TensorFlow"/>
 <use   name="rootcore"/>
 <use   name="fastjet"/>
+<use   name="roottmva"/>
+<use   name="PyMVA"/>
+<use   name="TMVA"/>
+<use   name="rootpymva"/>
 <export>
+
   <lib   name="1"/>
 </export>
+<Flags FlagName="-lPyMVA -lTMVA"/>
