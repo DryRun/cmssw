@@ -984,7 +984,8 @@ class ConfigBuilder(object):
 	self.PATDefaultSeq='miniAOD'
 	self.PATGENDefaultSeq='miniGEN'
 	self.NANODefaultSeq='nanoSequence'
-	self.NANOGENDefaultSeq='nanogenSequence'
+        self.NANOGENDefaultSeq='nanogenSequence' if any([x in self.stepMap for x in ['LHE', 'GEN', 'AOD']]) else 'nanogenMiniSequence' 
+
 
         self.EVTCONTDefaultCFF="Configuration/EventContent/EventContent_cff"
 
@@ -1684,10 +1685,12 @@ class ConfigBuilder(object):
              self._options.customise_commands = self._options.customise_commands + "process.unpackedPatTrigger.triggerResults= cms.InputTag( 'TriggerResults::"+self._options.hltProcess+"' )\n"
 
     def prepare_NANOGEN(self, sequence = "nanoAOD"):
-        ''' Enrich the schedule with NANO '''
+        ''' Enrich the schedule with NANOGEN '''
+        # TODO: Need to modify this based on the input file type
+        fromGen = any([x in self.stepMap for x in ['LHE', 'GEN', 'AOD']])
         self.loadDefaultOrSpecifiedCFF(sequence,self.NANOGENDefaultCFF)
         self.scheduleSequence(sequence.split('.')[-1],'nanoAOD_step')
-        custom = "customizeNanoGEN"
+        custom = "customizeNanoGEN" if fromGen else "customizeNanoGENFromMini"
         if self._options.runUnscheduled:
             self._options.customisation_file_unsch.insert(0, '.'.join([self.NANOGENDefaultCFF, custom]))
         else:
